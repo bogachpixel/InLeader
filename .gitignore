@@ -4,6 +4,7 @@
 .env.*.local
 *.env
 !.env.example
+.envrc
 
 # Python
 __pycache__/
@@ -26,12 +27,15 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
 # Виртуальное окружение
 .venv/
 venv/
 ENV/
 env/
+env.bak/
+venv.bak/
 
 # IDE
 .idea/
@@ -44,7 +48,14 @@ env/
 *.log
 *.tmp
 .cache/
+db.sqlite3
+db.sqlite3-journal
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Дополнительно (из Python template)
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
