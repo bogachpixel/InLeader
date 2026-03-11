@@ -10,7 +10,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from config.i18n import TEXTS
 from config.prompts import get_system_instruction
 from services import db
-from services.ai_service import generate_text
+from services.ai_service import generate_text, format_admin_footer
 from services.language import get_language, t
 
 logger = logging.getLogger(__name__)
@@ -23,14 +23,6 @@ _ALL_TRAINER_BUTTONS = {
 
 PERSONA_KEYS = ("student", "pensioner", "office", "blogger", "entrepreneur", "skeptic")
 
-_PERSONA_LABELS: dict[str, str] = {
-    "student": "🎓 Студент (Хочет всё и сразу, боится мнения друзей)",
-    "pensioner": "👵 Пенсионер (Хочет путешествовать, боится обмана)",
-    "office": "👔 Офисный сотрудник (Мечтает об увольнении, боится риска)",
-    "blogger": "📸 Блогер (Нужен контент, не хочет «впаривать»)",
-    "entrepreneur": "🏠 Предприниматель (Ищет систему, не верит в сетевой)",
-    "skeptic": "🤨 Скептичный партнер (Просит факты и легальность)",
-}
 
 _SOFTENING_BASE = (
     "Ты начинаешь как жесткий скептик (уровень 10/10). "
@@ -91,7 +83,7 @@ def _build_persona_keyboard(user_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for key in PERSONA_KEYS:
         builder.button(
-            text=_PERSONA_LABELS[key],
+            text=t(user_id, f"sim_persona_{key}"),
             callback_data=f"sim:persona:{key}",
         )
     builder.button(text=t(user_id, "btn_back_menu"), callback_data="menu:main")
@@ -115,14 +107,7 @@ async def menu_simulator(callback: CallbackQuery, state: FSMContext) -> None:
     if uid != ADMIN_ID:
         coins = db.get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await callback.message.answer(text, parse_mode="HTML")
+            await callback.message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             await callback.answer()
             return
     await callback.answer()
@@ -140,14 +125,7 @@ async def simulator_menu(message: Message, state: FSMContext) -> None:
     if uid != ADMIN_ID:
         coins = db.get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await message.answer(text, parse_mode="HTML")
+            await message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             return
     await state.clear()
     await message.answer(
@@ -169,12 +147,13 @@ async def persona_chosen(callback: CallbackQuery, state: FSMContext) -> None:
 
     persona_system = _get_persona_system(persona_key, 0)
 
-    opening = await generate_text(
+    gen = await generate_text(
         prompt="Начни диалог первым. Напиши одно короткое сообщение как клиент, которому только что написали про круизный клуб.",
         system_instruction=persona_system,
         task_type="simulator",
         user_id=uid,
     )
+    opening = gen.text
 
     await state.set_state(SimulatorState.in_dialogue)
     await state.update_data(
@@ -183,15 +162,16 @@ async def persona_chosen(callback: CallbackQuery, state: FSMContext) -> None:
         turn_count=0,
     )
 
+    display = f"🎭 *Клиент:*\n\n{opening}" + format_admin_footer(gen, uid)
     try:
         await status.edit_text(
-            f"🎭 *Клиент:*\n\n{opening}",
+            display,
             reply_markup=_build_stop_keyboard(uid),
             parse_mode=None,
         )
     except Exception:
         await callback.message.answer(
-            f"🎭 Клиент:\n\n{opening}",
+            display.replace("*", ""),
             reply_markup=_build_stop_keyboard(uid),
             parse_mode=None,
         )
@@ -224,19 +204,21 @@ async def dialogue_turn(message: Message, state: FSMContext) -> None:
     if len(history) > MAX_HISTORY:
         history = history[-MAX_HISTORY:]
 
-    reply = await generate_text(
+    gen = await generate_text(
         prompt=message.text,
         system_instruction=persona_system,
         task_type="simulator",
         history=history[:-1],
         user_id=uid,
     )
+    reply = gen.text
 
     history.append({"role": "assistant", "content": reply})
     await state.update_data(history=history, turn_count=turn_count)
 
+    display = f"🎭 *Клиент:*\n\n{reply}" + format_admin_footer(gen, uid)
     await message.answer(
-        f"🎭 *Клиент:*\n\n{reply}",
+        display,
         reply_markup=_build_stop_keyboard(uid),
         parse_mode=None,
     )
@@ -269,20 +251,22 @@ async def stop_and_review(callback: CallbackQuery, state: FSMContext) -> None:
     status = await callback.message.answer(t(uid, "sim_analyzing"))
 
     review_prompt = t(uid, "sim_review_prompt", dialogue=dialogue_text)
-    review = await generate_text(
+    gen = await generate_text(
         prompt=review_prompt,
         system_instruction=get_system_instruction(uid),
         task_type="general",
         user_id=uid,
     )
+    review = gen.text
 
+    display = f"{t(uid, 'sim_ended')}\n\n{review}" + format_admin_footer(gen, uid)
     try:
         await status.edit_text(
-            f"{t(uid, 'sim_ended')}\n\n{review}",
+            display,
             parse_mode=None,
         )
     except Exception:
         await callback.message.answer(
-            f"{t(uid, 'sim_ended')}\n\n{review}",
+            display,
             parse_mode=None,
         )

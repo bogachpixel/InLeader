@@ -13,7 +13,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from config.i18n import TEXTS
 from config.knowledge_base import INSIDER_DISCOUNT_PCT, MAX_RP_COVERAGE_PCT, RP_VALUE_USD
 from services import db
-from services.ai_service import generate_text
+from services.ai_service import generate_text, format_admin_footer
 from services.image_gen import (
     generate_tourist_receipt,
     generate_cruise_receipt,
@@ -72,14 +72,7 @@ async def menu_calc(callback: CallbackQuery, state: FSMContext) -> None:
     if uid != ADMIN_ID:
         coins = db.get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await callback.message.answer(text, parse_mode="HTML")
+            await callback.message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             await callback.answer()
             return
     await callback.answer()
@@ -97,14 +90,7 @@ async def calc_menu(message: Message, state: FSMContext) -> None:
     if uid != ADMIN_ID:
         coins = db.get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await message.answer(text, parse_mode="HTML")
+            await message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             return
     await state.clear()
     await message.answer(
@@ -313,12 +299,13 @@ async def conversion_result(message: Message, state: FSMContext) -> None:
 
     status = await message.answer("⏳ Извлекаю цифры...", parse_mode=None)
 
-    raw = await generate_text(
+    gen = await generate_text(
         prompt=message.text,
         system_instruction=CONVERSION_JSON_PROMPT,
         task_type="general",
         user_id=uid
     )
+    raw = gen.text
 
     parsed = None
     if not raw.startswith("❌"):
@@ -363,11 +350,12 @@ async def conversion_result(message: Message, state: FSMContext) -> None:
         fees=f"{fees:,.0f}",
         final_total=f"{final_total:,.0f}",
     )
+    display = receipt + format_admin_footer(gen, uid)
 
     try:
-        await status.edit_text(receipt, parse_mode=None)
+        await status.edit_text(display, parse_mode=None)
     except Exception:
-        await message.answer(receipt, parse_mode=None)
+        await message.answer(display, parse_mode=None)
 
     try:
         lang = get_language(uid)

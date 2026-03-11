@@ -45,6 +45,40 @@ def init_db() -> None:
     conn.execute(
         "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)"
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS payment_orders (
+            order_id TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            amount_rub REAL NOT NULL,
+            status TEXT DEFAULT 'pending',
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS crm_reminders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            run_at TEXT NOT NULL,
+            task_text TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS usage_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            task_type TEXT NOT NULL,
+            model TEXT NOT NULL,
+            cost REAL,
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+        """
+    )
     for col in ("streak", "incoins", "daily_progress", "full_name", "is_authorized", "is_blocked"):
         try:
             if col == "full_name":
@@ -64,6 +98,11 @@ def init_db() -> None:
             pass
     try:
         conn.execute("ALTER TABLE users ADD COLUMN timezone INTEGER")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass
+    try:
+        conn.execute("ALTER TABLE payment_orders ADD COLUMN amount_coins INTEGER")
         conn.commit()
     except sqlite3.OperationalError:
         pass
@@ -93,10 +132,10 @@ def add_user(user_id: int, username: str | None, full_name: str | None = None) -
         conn.commit()
         return False
     else:
-        # Создаем нового с 10 монетами (тестовый режим)
+        # Создаем нового с 5 монетами (тестовый режим)
         conn.execute(
             "INSERT INTO users (user_id, username, full_name, incoins) VALUES (?, ?, ?, ?)",
-            (user_id, username, full_name, 10)
+            (user_id, username, full_name, 5)
         )
         conn.commit()
         return True
@@ -136,20 +175,21 @@ def spend_incoins(user_id: int, amount: int = 1) -> bool:
     Если нет — возвращает False.
     Администратор (5925660014) пользуется бесплатно.
     """
-    if user_id == 5925660014: # ADMIN_ID
+    if user_id == 5925660014:  # ADMIN_ID
         return True
-        
+
     conn = _get_conn()
     row = conn.execute(
-        "SELECT COALESCE(incoins, 0) as incoins FROM users WHERE user_id = ?", (user_id,)
+        "SELECT COALESCE(incoins, 0) as incoins FROM users WHERE user_id = ?",
+        (user_id,),
     ).fetchone()
-    
+
     if not row or row["incoins"] < amount:
         return False
-        
+
     conn.execute(
         "UPDATE users SET incoins = incoins - ? WHERE user_id = ?",
-        (amount, user_id)
+        (amount, user_id),
     )
     conn.commit()
     return True
@@ -324,17 +364,17 @@ def close_tracker_day(user_id: int) -> dict:
     from datetime import date, timedelta
     today = date.today().isoformat()
     yesterday = (date.today() - timedelta(days=1)).isoformat()
-    
+
     conn = _get_conn()
     row = conn.execute(
         "SELECT last_tracker_date, COALESCE(streak, 0) as streak FROM users WHERE user_id = ?",
         (user_id,),
     ).fetchone()
-    
+
     if row and row["last_tracker_date"] == today:
         return {"awarded": False, "new_streak": row["streak"]}
 
-    # Расчет нового стрика
+    # Расчёт нового стрика
     if row and row["last_tracker_date"] == yesterday:
         new_streak = row["streak"] + 1
     else:
@@ -342,9 +382,9 @@ def close_tracker_day(user_id: int) -> dict:
 
     conn.execute(
         """
-        UPDATE users 
-        SET last_tracker_date = ?, 
-            streak = ?, 
+        UPDATE users
+        SET last_tracker_date = ?,
+            streak = ?,
             incoins = COALESCE(incoins, 0) + 10,
             daily_progress = '0,0,0,0'
         WHERE user_id = ?
@@ -392,6 +432,54 @@ def has_reminders_for_today(user_id: int, current_date: str) -> bool:
         return False
 
 
+# ── CRM reminders (crm_reminders) ────────────────────────────────────────────
+
+def add_crm_reminder(user_id: int, run_at: str, task_text: str) -> int:
+    """Добавляет напоминание. run_at: ISO datetime. Возвращает id."""
+    conn = _get_conn()
+    cur = conn.execute(
+        "INSERT INTO crm_reminders (user_id, run_at, task_text) VALUES (?, ?, ?)",
+        (user_id, run_at, task_text),
+    )
+    conn.commit()
+    return cur.lastrowid or 0
+
+
+def get_user_crm_reminders(user_id: int) -> list[dict]:
+    """Возвращает активные напоминания пользователя (run_at >= now)."""
+    conn = _get_conn()
+    rows = conn.execute(
+        """
+        SELECT id, user_id, run_at, task_text
+        FROM crm_reminders
+        WHERE user_id = ? AND run_at >= datetime('now')
+        ORDER BY run_at
+        """,
+        (user_id,),
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_due_crm_reminders() -> list[dict]:
+    """Возвращает напоминания, которые пора отправить."""
+    conn = _get_conn()
+    rows = conn.execute(
+        """
+        SELECT id, user_id, task_text
+        FROM crm_reminders
+        WHERE run_at <= datetime('now')
+        """
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def delete_crm_reminder(reminder_id: int) -> None:
+    """Удаляет напоминание."""
+    conn = _get_conn()
+    conn.execute("DELETE FROM crm_reminders WHERE id = ?", (reminder_id,))
+    conn.commit()
+
+
 def get_total_users() -> int:
     """Возвращает общее количество пользователей."""
     conn = _get_conn()
@@ -410,7 +498,7 @@ def get_user_profile(user_id: int) -> dict | None:
     """Возвращает данные профиля пользователя для AI-анализа."""
     conn = _get_conn()
     row = conn.execute(
-        "SELECT user_id, username, score, last_tracker_date, streak, incoins, timezone FROM users WHERE user_id = ?",
+        "SELECT user_id, username, full_name, score, last_tracker_date, streak, incoins, timezone FROM users WHERE user_id = ?",
         (user_id,),
     ).fetchone()
     return dict(row) if row else None
@@ -471,6 +559,20 @@ def reset_all_authorizations(admin_id: int) -> None:
     conn.commit()
 
 
+def reset_test_period_for_all(admin_id: int) -> int:
+    """
+    Сбрасывает условие тестового периода для всех пользователей:
+    устанавливает incoins = 5 (как при первом входе).
+    Возвращает количество обновлённых строк. Администратор не затрагивается.
+    """
+    conn = _get_conn()
+    cursor = conn.execute(
+        "UPDATE users SET incoins = 5 WHERE user_id != ?", (admin_id,)
+    )
+    conn.commit()
+    return cursor.rowcount
+
+
 def get_setting(key: str, default_value: str) -> str:
     """Возвращает значение настройки из таблицы settings."""
     conn = _get_conn()
@@ -478,6 +580,128 @@ def get_setting(key: str, default_value: str) -> str:
         "SELECT value FROM settings WHERE key = ?", (key,)
     ).fetchone()
     return row["value"] if row else default_value
+
+
+def create_payment_order(order_id: str, user_id: int, amount_rub: float, amount_coins: int | None = None) -> None:
+    """Создаёт запись о заказе на пополнение. amount_coins — для тарифов (иначе 1₽=1 монета)."""
+    conn = _get_conn()
+    conn.execute(
+        "INSERT INTO payment_orders (order_id, user_id, amount_rub, amount_coins, status) VALUES (?, ?, ?, ?, 'pending')",
+        (order_id, user_id, amount_rub, amount_coins),
+    )
+    conn.commit()
+
+
+def get_payment_order(order_id: str) -> dict | None:
+    """Возвращает заказ по order_id или None."""
+    conn = _get_conn()
+    row = conn.execute(
+        "SELECT order_id, user_id, amount_rub, COALESCE(amount_coins, 0) as amount_coins, status FROM payment_orders WHERE order_id = ?",
+        (order_id,),
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def mark_payment_paid(order_id: str) -> bool:
+    """Помечает заказ как оплаченный. Возвращает True если обновлён."""
+    conn = _get_conn()
+    cursor = conn.execute(
+        "UPDATE payment_orders SET status = 'paid' WHERE order_id = ? AND status = 'pending'",
+        (order_id,),
+    )
+    conn.commit()
+    return cursor.rowcount > 0
+
+
+def log_usage(user_id: int, task_type: str, model: str, cost: float | None) -> None:
+    """Логирует одну генерацию для аналитики."""
+    conn = _get_conn()
+    conn.execute(
+        "INSERT INTO usage_log (user_id, task_type, model, cost) VALUES (?, ?, ?, ?)",
+        (user_id, task_type, model, cost if cost is not None else 0.0),
+    )
+    conn.commit()
+
+
+def get_usage_for_user(user_id: int) -> list[dict]:
+    """Возвращает список генераций пользователя для отчёта."""
+    conn = _get_conn()
+    rows = conn.execute(
+        """SELECT task_type, model, cost, created_at FROM usage_log 
+           WHERE user_id = ? ORDER BY created_at DESC""",
+        (user_id,),
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_usage_aggregate() -> dict:
+    """Агрегированная статистика по всем пользователям: по user_id, общая стоимость, топ активных."""
+    conn = _get_conn()
+    by_user = conn.execute(
+        """SELECT user_id, COUNT(*) as cnt, COALESCE(SUM(cost), 0) as total_cost
+           FROM usage_log GROUP BY user_id"""
+    ).fetchall()
+    totals = conn.execute(
+        "SELECT COUNT(*) as total_gen, COALESCE(SUM(cost), 0) as total_cost FROM usage_log"
+    ).fetchone()
+    by_task = conn.execute(
+        """SELECT task_type, COUNT(*) as cnt FROM usage_log GROUP BY task_type"""
+    ).fetchall()
+    return {
+        "by_user": [dict(r) for r in by_user],
+        "total_gen": totals["total_gen"] if totals else 0,
+        "total_cost": float(totals["total_cost"]) if totals else 0,
+        "by_task": [dict(r) for r in by_task],
+    }
+
+
+def get_usage_costs_by_period() -> dict:
+    """
+    Возвращает суммы затрат и количество генераций за сегодня, 7 дней и месяц.
+    Учитываются ВСЕ пользователи. Без фильтрации.
+    """
+    conn = _get_conn()
+    today_filter = "date(created_at) = date('now', 'localtime')"
+    filter_7d = "created_at >= datetime('now', '-7 days')"
+    filter_30d = "created_at >= datetime('now', '-30 days')"
+
+    def _row(q):
+        r = conn.execute(q).fetchone()
+        return r[0] if r else 0
+
+    return {
+        "cost_today": float(_row(f"SELECT COALESCE(SUM(cost), 0) FROM usage_log WHERE {today_filter}")),
+        "cost_7d": float(_row(f"SELECT COALESCE(SUM(cost), 0) FROM usage_log WHERE {filter_7d}")),
+        "cost_month": float(_row(f"SELECT COALESCE(SUM(cost), 0) FROM usage_log WHERE {filter_30d}")),
+        "gen_today": int(_row(f"SELECT COUNT(*) FROM usage_log WHERE {today_filter}")),
+        "gen_7d": int(_row(f"SELECT COUNT(*) FROM usage_log WHERE {filter_7d}")),
+        "gen_month": int(_row(f"SELECT COUNT(*) FROM usage_log WHERE {filter_30d}")),
+    }
+
+
+def get_usage_by_user_period() -> list[dict]:
+    """
+    Для каждого пользователя: затраты и генерации за сегодня, 7 дней, месяц и всего.
+    ВСЕ пользователи из usage_log, без исключений.
+    """
+    conn = _get_conn()
+    today_filter = "date(created_at) = date('now', 'localtime')"
+    filter_7d = "created_at >= datetime('now', '-7 days')"
+    filter_30d = "created_at >= datetime('now', '-30 days')"
+
+    rows = conn.execute(
+        """SELECT user_id,
+           COALESCE(SUM(CASE WHEN """ + today_filter + """ THEN cost ELSE 0 END), 0) as cost_today,
+           COALESCE(SUM(CASE WHEN """ + filter_7d + """ THEN cost ELSE 0 END), 0) as cost_7d,
+           COALESCE(SUM(CASE WHEN """ + filter_30d + """ THEN cost ELSE 0 END), 0) as cost_month,
+           COALESCE(SUM(cost), 0) as cost_total,
+           COUNT(CASE WHEN """ + today_filter + """ THEN 1 END) as gen_today,
+           COUNT(CASE WHEN """ + filter_7d + """ THEN 1 END) as gen_7d,
+           COUNT(CASE WHEN """ + filter_30d + """ THEN 1 END) as gen_month,
+           COUNT(*) as gen_total
+           FROM usage_log GROUP BY user_id"""
+    ).fetchall()
+    return [dict(r) for r in rows]
 
 
 def set_setting(key: str, value: str) -> None:

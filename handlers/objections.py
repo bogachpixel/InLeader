@@ -9,6 +9,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from config.i18n import TEXTS
 from config.prompts import get_system_instruction
 from services import ai_service
+from services.ai_service import format_admin_footer
 from services import db
 from services.language import t
 
@@ -40,14 +41,7 @@ async def menu_objections(callback: CallbackQuery, state: FSMContext):
     if uid != ADMIN_ID:
         coins = db.get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await callback.message.answer(text, parse_mode="HTML")
+            await callback.message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             await callback.answer()
             return
     await callback.answer()
@@ -69,14 +63,7 @@ async def process_objection_preset(callback: CallbackQuery, state: FSMContext):
     if uid != ADMIN_ID:
         coins = db.get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await callback.message.answer(text, parse_mode="HTML")
+            await callback.message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             await callback.answer()
             return
     coins = db.get_user_coins(uid)
@@ -88,12 +75,13 @@ async def process_objection_preset(callback: CallbackQuery, state: FSMContext):
     prompt = f"Клиент говорит: {obj_text}. Дай 3 убийственных аргумента для отработки этого возражения в inCruises."
 
     try:
-        response_text = await ai_service.generate_text(prompt, get_system_instruction(uid), task_type="objections")
-        await wait_msg.edit_text(response_text, parse_mode=None)
+        gen = await ai_service.generate_text(prompt, get_system_instruction(uid), task_type="objections")
+        display = gen.text + format_admin_footer(gen, uid)
+        await wait_msg.edit_text(display, parse_mode=None)
         
         if uid != ADMIN_ID:
             db.add_user_coins_admin(uid, -1)
-            await callback.message.answer(f"⚡️ Успешно! Списана 1 монета. Остаток: {coins - 1} 🪙")
+            await callback.message.answer(t(uid, "coin_deducted", coins=coins - 1))
             
     except Exception as e:
         print(f"🔥 ОШИБКА ГЕНЕРАЦИИ (СМОТРЕТЬ СЮДА): {repr(e)}") # Вывод в консоль PyCharm!
@@ -110,26 +98,20 @@ async def process_custom_objection(message: Message, state: FSMContext):
     if uid != ADMIN_ID:
         coins = db.get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await message.answer(text, parse_mode="HTML")
+            await message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             return
     coins = db.get_user_coins(uid)
 
     wait_msg = await message.answer("⏳ Готовлю ответ. Пожалуйста, подождите...")
 
     try:
-        response_text = await ai_service.generate_text(prompt, get_system_instruction(uid), task_type="objections")
-        await wait_msg.edit_text(response_text, parse_mode=None)
+        gen = await ai_service.generate_text(prompt, get_system_instruction(uid), task_type="objections")
+        display = gen.text + format_admin_footer(gen, uid)
+        await wait_msg.edit_text(display, parse_mode=None)
         
         if uid != ADMIN_ID:
             db.add_user_coins_admin(uid, -1)
-            await message.answer(f"⚡️ Успешно! Списана 1 монета. Остаток: {coins - 1} 🪙")
+            await message.answer(t(uid, "coin_deducted", coins=coins - 1))
             
     except Exception as e:
         print(f"🔥 ОШИБКА ГЕНЕРАЦИИ (СМОТРЕТЬ СЮДА): {repr(e)}") # Вывод в консоль PyCharm!

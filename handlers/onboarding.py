@@ -8,7 +8,7 @@ from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKe
 
 from config.i18n import TEXTS
 from services import db
-from services.ai_service import generate_text
+from services.ai_service import generate_text, format_admin_footer
 from services.language import t
 from pypdf import PdfReader
 
@@ -44,29 +44,19 @@ async def menu_onboarding(callback: CallbackQuery, state: FSMContext) -> None:
     if uid != ADMIN_ID:
         coins = db.get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await callback.message.answer(text, parse_mode="HTML")
+            await callback.message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             await callback.answer()
             return
     await callback.answer()
     await state.clear()
     
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏖️ Турист (Клубные привилегии +)", callback_data="newbie:tourist")],
-        [InlineKeyboardButton(text="💼 Партнер (Бизнес и доход)", callback_data="newbie:partner")],
-        [InlineKeyboardButton(text="🚀 ИИ-Навигатор: Мой план успеха", callback_data="newbie:navigator")]
+        [InlineKeyboardButton(text=t(uid, "ob_tourist"), callback_data="newbie:tourist")],
+        [InlineKeyboardButton(text=t(uid, "ob_partner"), callback_data="newbie:partner")],
+        [InlineKeyboardButton(text=t(uid, "ob_navigator"), callback_data="newbie:navigator")]
     ])
     
-    await callback.message.answer(
-        "👋 Добро пожаловать в команду InCruises!\n\nЧтобы я подготовил для тебя персональный план развития, выбери свою текущую цель:",
-        reply_markup=kb
-    )
+    await callback.message.answer(t(uid, "ob_welcome"), reply_markup=kb)
     await state.set_state(OnboardingState.choosing_role)
 
 @router.message(F.text.func(lambda text: text in _ALL_ONBOARDING_BUTTONS))
@@ -75,27 +65,17 @@ async def onboarding_start(message: Message, state: FSMContext) -> None:
     if uid != ADMIN_ID:
         coins = db.get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await message.answer(text, parse_mode="HTML")
+            await message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             return
     await state.clear()
     
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏖️ Турист (Клубные привилегии +)", callback_data="newbie:tourist")],
-        [InlineKeyboardButton(text="💼 Партнер (Бизнес и доход)", callback_data="newbie:partner")],
-        [InlineKeyboardButton(text="🚀 ИИ-Навигатор: Мой план успеха", callback_data="newbie:navigator")]
+        [InlineKeyboardButton(text=t(uid, "ob_tourist"), callback_data="newbie:tourist")],
+        [InlineKeyboardButton(text=t(uid, "ob_partner"), callback_data="newbie:partner")],
+        [InlineKeyboardButton(text=t(uid, "ob_navigator"), callback_data="newbie:navigator")]
     ])
     
-    await message.answer(
-        "👋 Добро пожаловать в команду InCruises!\n\nЧтобы я подготовил для тебя персональный план развития, выбери свою текущую цель:",
-        reply_markup=kb
-    )
+    await message.answer(t(uid, "ob_welcome"), reply_markup=kb)
     await state.set_state(OnboardingState.choosing_role)
 
 NAVIGATOR_QUESTIONS = [
@@ -163,19 +143,20 @@ async def navigator_answer_3(message: Message, state: FSMContext) -> None:
     system_prompt = "Ты — топ-лидер InCruises. На основе ответов пользователя составь краткий, вдохновляющий план действий на первые 30 дней. Структурируй по неделям, добавь конкретные шаги и мотивацию."
     prompt = f"Ответы пользователя:\n1. Главная цель: {a1}\n2. Опыт: {a2}\n3. Время в неделю: {a3}\n\nСоставь персональный план на 30 дней."
     
-    result = await generate_text(
+    gen = await generate_text(
         prompt=prompt,
         system_instruction=system_prompt,
         task_type="onboarding_navigator",
         user_id=uid,
     )
-    
+    display = gen.text + format_admin_footer(gen, uid)
+
     try:
-        await status.edit_text(result, parse_mode=None)
+        await status.edit_text(display, parse_mode=None)
     except Exception:
-        await message.answer(result, parse_mode=None)
+        await message.answer(display, parse_mode=None)
     
-    if uid != ADMIN_ID and not result.startswith("⚠️"):
+    if uid != ADMIN_ID and not gen.text.startswith("⚠️"):
         db.add_user_coins_admin(uid, -1)
         coins = db.get_user_coins(uid)
         await message.answer(f"⚡️ Списано 1 InCoin. Остаток: {coins} 🪙")
@@ -205,24 +186,25 @@ async def onboarding_chat(message: Message, state: FSMContext) -> None:
 
     status = await message.answer(t(uid, "ob_thinking"))
 
-    result = await generate_text(
+    gen = await generate_text(
         prompt=message.text,
         system_instruction=system_prompt,
         task_type="onboarding_chat",
         user_id=uid,
     )
+    display = gen.text + format_admin_footer(gen, uid)
 
     MAX_TG_LEN = 4096
-    if len(result) <= MAX_TG_LEN:
+    if len(display) <= MAX_TG_LEN:
         try:
-            await status.edit_text(result, parse_mode=None)
+            await status.edit_text(display, parse_mode=None)
         except Exception:
-            await message.answer(result, parse_mode=None)
+            await message.answer(display, parse_mode=None)
     else:
         try:
             await status.delete()
         except Exception:
             pass
-        for i in range(0, len(result), MAX_TG_LEN):
-            chunk = result[i : i + MAX_TG_LEN]
+        for i in range(0, len(display), MAX_TG_LEN):
+            chunk = display[i : i + MAX_TG_LEN]
             await message.answer(chunk, parse_mode=None)

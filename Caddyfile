@@ -1,0 +1,23 @@
+# Caddyfile для InLeader — сайт in-leader.ru
+# Запуск: caddy run --config Caddyfile
+
+in-leader.ru {
+    # 1. Вебхуки кассы отправляем боту на порт 8081
+    handle /freekassa/* {
+        reverse_proxy localhost:8081
+    }
+
+    # 2. Запросы к ИИ-API отправляем на порт 9000
+    handle /api/* {
+        reverse_proxy localhost:9000
+    }
+
+    # 3. Всё остальное — это файлы сайта
+    handle {
+        root * C:/Users/Администратор/in-leader-site
+        try_files {path} /index.html
+        file_server
+    }
+
+    encode gzip
+}

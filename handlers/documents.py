@@ -11,7 +11,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from config.i18n import TEXTS
 from config.knowledge_base import get_cruise_protection_facts_for_ai
 from config.prompts import get_system_instruction
-from services.ai_service import generate_text
+from services.ai_service import generate_text, format_admin_footer
 from services.language import t
 
 logger = logging.getLogger(__name__)
@@ -59,13 +59,15 @@ async def doc_cruise_protection(callback: CallbackQuery) -> None:
     status = await callback.message.answer(t(uid, "doc_thinking"))
     system = get_system_instruction(uid) + "\n\n" + get_cruise_protection_facts_for_ai()
     prompt = t(uid, "doc_cruise_protection_prompt")
-    result = await generate_text(
+    gen = await generate_text(
         prompt=prompt,
         system_instruction=system,
         task_type="general",
+        user_id=uid,
     )
+    display = gen.text + format_admin_footer(gen, uid)
     try:
-        await status.edit_text(result, parse_mode=None)
+        await status.edit_text(display, parse_mode=None)
     except Exception as e:
         logger.error("doc cruise protection: %s", e)
-        await callback.message.answer(result, parse_mode=None)
+        await callback.message.answer(display, parse_mode=None)

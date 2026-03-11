@@ -6,6 +6,7 @@ Usage:  TEXTS[lang_code][key]
 
 LANGUAGES: dict[str, str] = {
     "ru": "🇷🇺 Русский",
+    "az": "🇦🇿 Azərbaycan",
     "en": "🇬🇧 English",
     "kk": "🇰🇿 Қазақша",
     "it": "🇮🇹 Italiano",
@@ -33,7 +34,7 @@ TEXTS: dict[str, dict[str, str]] = {
             "• 🏆 *Рейтинг* — топ активных партнёров\n\n"
             "Нажимай кнопки меню — и вперёд! 🚀"
         ),
-        "lang_stub": "✅ Язык сохранён! (Остальные языки — скоро)",
+        "lang_stub": "✅ Язык сохранён!",
         "welcome": (
             "Привет! Я *InLeader* 🚢\n\n"
             "Помогу подготовить посты и отработать возражения.\n"
@@ -41,7 +42,16 @@ TEXTS: dict[str, dict[str, str]] = {
         ),
         "menu_placeholder": "Выбери действие",
         "btn_back_menu": "🏠 В меню",
+        "btn_back": "🔙 Назад",
         "btn_menu": "📋 Меню",
+        "btn_balance": "💰 Мой баланс",
+        "btn_topup": "💰 Пополнить",
+        "btn_tariffs": "💎 Тарифы",
+        "btn_registration": "📝 Регистрация",
+        "btn_referral": "🔗 Рефералка",
+        "btn_continue": "🚀 Продолжить",
+        "btn_pay": "💳 Оплатить",
+        "btn_pay_amount": "💳 Оплатить {amount}₽",
         "menu_reply_hint": "⬇️ Кнопка «Меню» — всегда под рукой",
         "menu_choose": "📋 Выбери раздел:",
         "btn_copywriter": "✍️ Умный копирайтер",
@@ -124,6 +134,9 @@ TEXTS: dict[str, dict[str, str]] = {
         "account_policy_user_prompt": "Партнёр написал: «{question}»\n\nОтветь на основе политики. Если уместно — задай уточняющий вопрос или проверь, понял ли он. Будь лаконичен. Используй ТОЛЬКО данные из контекста.",
         "account_policy_system": "Ты — обучающий помощник по политике inCruises. Отвечай на вопросы, задавай контрвопросы для проверки понимания, обучай партнёров. НЕ выдумывай — используй ТОЛЬКО факты из контекста.",
         "account_btn_back_account": "◀ Назад в аккаунт",
+        "account_2fa_step_done": "✅ Выполнил, к следующему шагу",
+        "account_2fa_finish": "✅ Готово! Завершить",
+        "account_2fa_start": "🚀 Начать настройку 2FA",
         # marketing
         "btn_marketing": "📊 Маркетинг-план",
         "mkt_title": "📊 *Маркетинг-план*\n\nВыбери нужный раздел:",
@@ -170,6 +183,56 @@ TEXTS: dict[str, dict[str, str]] = {
         "trk_do_all_first": "Сначала выполни все действия!",
         "trk_all_done_already": "Ты уже выполнил все задачи на сегодня! 🎉",
         "trk_ask_report": "Молодец! Но просто нажать кнопки мало. Напиши краткий отчет: кому сегодня звонил/писал? Какие были возражения или успехи?",
+        "trk_restart_sprint": "🔄 Начать спринт заново",
+        "trk_done_today": "✅ План на сегодня выполнен!\n🔥 Твой стрик: {streak} дней. Возвращайся завтра, чтобы продолжить спринт!",
+        "trk_choose_tz": "🌍 Чтобы я напоминал тебе о трекере ровно в 20:00, выбери свой часовой пояс:",
+        "tz_2": "UTC+2 Европа",
+        "tz_3": "UTC+3 Москва",
+        "tz_4": "UTC+4 Екатеринбург",
+        "tz_5": "UTC+5 Астана/Ташкент",
+        "tz_6": "UTC+6 Алматы/Бишкек",
+        "tz_7": "UTC+7 Новосибирск/Бангкок",
+        "tz_8": "UTC+8 Иркутск/Сингапур",
+        "trk_task_done_already": "✅ Это задание уже выполнено сегодня!",
+        "trk_report_prompt": "📝 Отчет по заданию: *{label}*\n\nНапиши кратко, что именно сделано?",
+        "trk_report_too_short": "❌ Слишком короткий отчет. Распиши подробнее!",
+        "trk_task_accepted": "✅ Задание принято!",
+        "trk_sprint_reset": "🔄 Спринт сброшен!",
+        "trk_reminder": "⏰ Капитан! Время 20:00, а твой Журнал пуст! Зайди в Трекер, иначе твой стрик сгорит!",
+        "crm_reminder_header": "🔔 *Напоминание (Follow-up):*",
+        "paywall_text": (
+            "⚠️ <b>Доступ ограничен</b>\n\n"
+            "Твой тестовый период или текущий баланс InCoins подошли к концу. "
+            "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
+            "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
+            "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
+        ),
+        "coin_deducted": "⚡️ Успешно! Списана 1 монета. Остаток: {coins} 🪙",
+        "payment_success": "✅ <b>Пополнение прошло успешно!</b>\n\nНа ваш баланс зачислено <b>{coins} InCoins</b> 🪙\nСумма оплаты: {amount:.2f} ₽",
+        "payment_success_cryptopay": "💎 Поздравляем! Оплата через CryptoPay прошла успешно. Баланс пополнен.",
+        "blocked_msg": "🚫 Ваш доступ к боту заблокирован администратором.",
+        "welcome_back": "С возвращением, {name}! 👋\n\nНа твоём балансе осталось <b>{coins} InCoins</b> 🪙",
+        "wallet_text": "💳 <b>Ваш кошелёк:</b>\n\nДоступно: <b>{coins} InCoins</b> 🪙\n\n<i>💡 1 генерация ИИ = 1 InCoin.</i>",
+        "test_mode_text": (
+            "⚙️ <b>Внимание: Тестовый режим</b>\n\n"
+            "Вы получили доступ к InLeader в режиме закрытого бета-тестирования. "
+            "Вам начислено <b>5 InCoins</b> 🪙 для бесплатного тестирования ИИ-функций.\n\n"
+            "📉 <b>Стоимость:</b> 1 генерация = 1 InCoin.\n"
+            "Когда монеты закончатся, доступ к ИИ будет приостановлен до пополнения баланса.\n\n"
+            "Используйте монеты с умом, чтобы оценить мощь наших инструментов! 🚢"
+        ),
+        "name_friend": "друг",
+        "balance_screen": "💳 <b>Ваш кошелёк</b>\n\nДоступно: <b>{coins} InCoins</b> 🪙\n\n<i>1 генерация ИИ = 1 InCoin</i>\n\nВыберите сумму пополнения:",
+        "balance_topup_text": "💳 <b>Пополнение на {amount} ₽</b>\n\n1 ₽ = 1 InCoin\nПосле оплаты вы получите <b>{amount} InCoins</b>.\n\nНажмите кнопку ниже для перехода к оплате:",
+        "balance_payment_error": "❌ Ошибка настройки платежей. Обратитесь к администратору.",
+        "tariff_desc": "Выберите подходящий пакет InCoins для доступа к AI-инструментам InLeader. InCoins позволяют генерировать контент, отрабатывать возражения и проводить аудит профилей.",
+        "tariff_title": "💎 <b>Тарифы InCoins</b>\n\n{desc}\n\nВыберите пакет:",
+        "tariff_trial": "Проба",
+        "tariff_standard": "Стандарт",
+        "tariff_leader": "Лидер",
+        "tariff_pay_text": "💎 <b>{label}</b> — {coins} InCoins\n\nСумма к оплате: <b>{amount} ₽</b>\n\nНажмите кнопку ниже для перехода к оплате:",
+        "admin_free": "👑 Администратор пользуется ботом бесплатно.",
+        "tariff_error": "❌ Ошибка выбора тарифа.",
         # calculator
         "btn_calc": "🧮 Калькулятор",
         "calc_title": "🧮 *Калькулятор*\n\nВыбери тип расчёта:",
@@ -240,6 +303,12 @@ TEXTS: dict[str, dict[str, str]] = {
         ),
         "sim_no_messages": "⚠️ Диалог пуст — напиши хотя бы одно сообщение клиенту.",
         "sim_ended": "✅ Тренировка завершена! Вот разбор:",
+        "sim_persona_student": "🎓 Студент (Хочет всё и сразу, боится мнения друзей)",
+        "sim_persona_pensioner": "👵 Пенсионер (Хочет путешествовать, боится обмана)",
+        "sim_persona_office": "👔 Офисный сотрудник (Мечтает об увольнении, боится риска)",
+        "sim_persona_blogger": "📸 Блогер (Нужен контент, не хочет «впаривать»)",
+        "sim_persona_entrepreneur": "🏠 Предприниматель (Ищет систему, не верит в сетевой)",
+        "sim_persona_skeptic": "🤨 Скептичный партнер (Просит факты и легальность)",
         # crm
         "btn_crm": "📅 CRM и Напоминания",
         "crm_title": "📅 CRM и Напоминания (Follow-up)\n\nВыбери действие:",
@@ -260,6 +329,10 @@ TEXTS: dict[str, dict[str, str]] = {
         "crm_list_header": "📋 Твои активные напоминания:\n",
         # onboarding
         "btn_onboarding": "🚀 Запуск новичка InCruises",
+        "ob_tourist": "🏖️ Турист (Клубные привилегии +)",
+        "ob_partner": "💼 Партнер (Бизнес и доход)",
+        "ob_navigator": "🚀 ИИ-Навигатор: Мой план успеха",
+        "ob_welcome": "👋 Добро пожаловать в команду InCruises!\n\nЧтобы я подготовил для тебя персональный план развития, выбери свою текущую цель:",
         "ob_ask_goal": (
             "👋 Добро пожаловать в команду!\n\n"
             "Чтобы я мог давать тебе максимально полезные советы, давай познакомимся. "
@@ -271,6 +344,14 @@ TEXTS: dict[str, dict[str, str]] = {
         # analyzer
         "btn_analyzer": "🧠 Аналитик встреч",
         "btn_mentor": "🧠 AI-Ментор",
+        "mentor_title": "🧠 <b>Твой личный Совет Директоров на связи!</b>\n\nЗдесь нет воды — только глубокий анализ, выжимка опыта и четкие стратегии. В любой непонятной ситуации обращайся к своим AI-наставникам.\n\nКакую сферу будем прокачивать сейчас? Выбери эксперта:",
+        "mentor_mindset": "🧠 Майндсет и Мышление",
+        "mentor_sales": "💰 Искусство Продаж",
+        "mentor_coaching": "🎯 Стратегический Коучинг",
+        "mentor_management": "👥 Лидерство и Менеджмент",
+        "mentor_psychology": "🧘‍♂️ Психология Влияния",
+        "mentor_mlm": "🌐 MLM и Масштабирование",
+        "mentor_ask": "Отличный выбор. Я готов. Опиши свою текущую ситуацию или задай вопрос:",
         "analyzer_ask": (
             "🧠 Опиши, как прошла твоя встреча или созвон с клиентом.\n\n"
             "Что сказал ты? Что ответил клиент? На каком моменте диалог забуксовал?\n"
@@ -289,9 +370,349 @@ TEXTS: dict[str, dict[str, str]] = {
         "doc_thinking": "⏳ InLeader подготавливает ответ...",
         "doc_cruise_protection_prompt": "На основе файла «Защита круиза» расскажи о защите круиза: условия, что входит, как работает. Используй ТОЛЬКО данные из контекста. Ответ на русском.",
     },
+    # ── Azerbaijani ───────────────────────────────────────────────
+    "az": {
+        "choose_lang": "🌍 Dil seçin:",
+        "start_greeting": "Salam, {name}! 👋\n\nMən *InLeader* 🚢 — inCruises tərəfdaşları üçün köməkçinizəm.",
+        "start_guide": (
+            "📖 *Bot haqqında qısa bələdçi:*\n\n"
+            "• ✍️ *Kopyrayter* — auditoriyanız üçün postlar\n"
+            "• 🛡 *Etirazlar* — müştərilər üçün arqumentlər\n"
+            "• 🧮 *Kalkulyator* — gəlir və kruiz hesablamaları\n"
+            "• 📊 *Marketinq planı* — dərəcələr, bonuslar, AI suallar\n"
+            "• 🎯 *Trekker* — günlük plan + InCoins\n"
+            "• 🎭 *AI-Treyner* — müştəri ilə satış praktikası\n"
+            "• 🧠 *Görüş analitiki* — zəng və follow-up təhlili\n"
+            "• 🧠 *AI-Mentor* — virtual mütəxəssislərdən koçinq\n"
+            "• 🏆 *Reytinq* — ən aktiv tərəfdaşlar\n\n"
+            "Menyu düymələrinə bas — və irəlilə! 🚀"
+        ),
+        "lang_stub": "✅ Dil saxlanıldı!",
+        "welcome": (
+            "Salam! Mən *InLeader* 🚢\n\n"
+            "Postlar hazırlamağa və etirazları işləməyə kömək edəcəyəm.\n"
+            "Başlamaq üçün aşağıdakı düyməyə bas:"
+        ),
+        "menu_placeholder": "Əməliyyat seçin",
+        "btn_back_menu": "🏠 Menyaya",
+        "btn_back": "🔙 Geri",
+        "btn_menu": "📋 Menyu",
+        "btn_balance": "💰 Balansım",
+        "btn_topup": "💰 Yüklə",
+        "btn_tariffs": "💎 Tariflər",
+        "btn_registration": "📝 Qeydiyyat",
+        "btn_referral": "🔗 Referal",
+        "btn_continue": "🚀 Davam et",
+        "btn_pay": "💳 Ödə",
+        "btn_pay_amount": "💳 {amount}₽ ödə",
+        "menu_reply_hint": "⬇️ «Menyu» düyməsi — həmişə əlində",
+        "menu_choose": "📋 Bölmə seçin:",
+        "btn_copywriter": "✍️ Ağıllı kopyrayter",
+        "btn_objections": "🛡 Etirazlar bazası",
+        "btn_change_lang": "🌍 Dil dəyiş",
+        "btn_sales_trainer": "🎭 AI-Satış treyneri",
+        "copywriter_title": (
+            "✍️ *Ağıllı kopyrayter*\n\n"
+            "Mövzu seç — kruiz klubu üçün cəlbedici post yazacağam:"
+        ),
+        "copy_story": "📖 Mənim gəliş tarixçəm",
+        "copy_free": "🎁 Pulsuz üzvlük",
+        "copy_top5": "🌍 Kruizda top-5 səbəb",
+        "copy_money": "💰 Klubda qazanç",
+        "copy_kids": "👨‍👩‍👧‍👦 Uşaqlarla kruizlər",
+        "copy_myths": "🛳 Kruizlar haqqında mifler",
+        "copy_motivation": "🏆 Nəticələr və motivasiya",
+        "copy_liner": "🚢 Layner baxışı",
+        "copy_custom": "✍️ Öz sorğun (mətn)",
+        "copy_ask_custom": "Haqqında nə yazmaq istəyirsən? Mövzu, ideya və ya hədəf auditoriya yaz — güclü post hazırlayacağam:",
+        "copy_custom_prompt": "Tərəfdaş mövzu üzrə post istəyir: {topic}. inCruises kruiz klubu üçün cəlbedici post yaz. Qısa, emoji ilə. Cavab azərbaycanca.",
+        "aud_moms": "Doğuş məzuniyyətində olan analar",
+        "aud_entrepreneurs": "Sahibkarlar",
+        "aud_students": "Tələbələr/Gənclər",
+        "generating_post": "⏳ InLeader post hazırlayır...",
+        "post_prompt": "Kruiz klubu üçün auditoriyaya qısa, cəlbedici dəvət postu yaz: {audience}. Cavab azərbaycanca ver.",
+        "error_post": "❌ Post hazırlanmadı.",
+        "objections_title": (
+            "🛡 *Etirazlar bazası*\n\n"
+            "Müştərinin etirazını seç — işləmə üçün arqumentlər hazırlayacağam:"
+        ),
+        "obj_money": "💸 Pulum yoxdur",
+        "obj_time": "⏳ Vaxtım yoxdur",
+        "obj_pyramid": "🔺 Bu piramidadır",
+        "obj_family": "👫 Ailə qarşıdır",
+        "obj_invite": "🗣 Dəvət etməyi bilmirəm",
+        "obj_seasick": "🌊 Dəniz xəstəliyindən qorxuram",
+        "obj_visa": "🛂 Viza məsələsi çətindir",
+        "obj_language": "🇬🇧 Dil bilmirəm",
+        "obj_custom": "✍️ Öz variant yaz",
+        "obj_ask_custom": "Müştərinin etirazını mətnlə yaz — düzgün bağlamağa kömək edəcəyəm:",
+        "objection_custom_prompt": "Bu inCruises müştəri etirazını maksimum inandırıcı, aqressiyasız, faktlara əsaslanaraq işlə. Etiraz: {objection}",
+        "obj_no_money": "Pulum yoxdur",
+        "obj_no_time": "Buna vaxtım yoxdur",
+        "generating_objection": "⏳ InLeader arqumentlər hazırlayır...",
+        "objection_prompt": (
+            "inCruises kruiz klubu müştərisi etiraz bildirdi: «{objection}». "
+            "Tərəfdaşın yazışmada asanlıqla işləyə bilməsi üçün 2-3 qısa, nəzakətli və ağır arqument ver. "
+            "Formatlaşdırma və siyahılar istifadə et. Cavab azərbaycanca ver."
+        ),
+        "error_objection": "❌ Cavab hazırlanmadı.",
+        "btn_media": "👤 Hesabda iş",
+        "btn_account": "👤 Hesabda iş",
+        "account_title": "👤 *Hesabda iş*\n\nBölmə seçin:",
+        "account_2fa": "🔐 2FA quraşdır",
+        "account_2fa_intro": (
+            "🔐 *İki faktorlu autentifikasiya (2FA)*\n\n"
+            "Addım-addım təlimatı izlə. Hər addımı yerinə yetirdikdən sonra təsdiq düyməsinə bas — "
+            "yalnız o zaman növbəti addım açılacaq.\n\nBaşlamağa hazırsan?"
+        ),
+        "account_2fa_no_file": (
+            "📁 2FA təlimat faylı tapılmadı.\n\n"
+            "*2FA.pdf* və ya *2FA.txt* faylını `documents/` və ya `documents/2FA/` qovluğuna qoyun. "
+            "Addım şəkilləri: `documents/2FA/step1.png`, `step2.png` və s."
+        ),
+        "account_2fa_congrats": (
+            "🎉 *Təbriklər!*\n\n"
+            "2FA-nı uğurla quraşdırdın. Hesabın indi etibarlı qorunur! 🔒\n\n"
+            "Ehtiyat kodları təhlükəsiz yerdə saxla. Uğurlu işlər! 🚀"
+        ),
+        "account_policy": "📋 Siyasət",
+        "account_policy_no_file": "📁 «Siyasət» faylı tapılmadı. documents/ qovluğuna siyasət.pdf və ya siyasət.txt əlavə edin.",
+        "account_policy_thinking": "⏳ InLeader cavab hazırlayır...",
+        "account_policy_ask": "Siyasət haqqında istənilən sual ver — cavab verəcəyəm, başa düşməni yoxlayacağam və kömək edəcəyəm.",
+        "account_policy_intro_prompt": "Sən inCruises siyasəti üzrə ekspertsən. «Siyasət» faylını tam öyrəndin. Tərəfdaşı qısa salamla. Suallara cavab verməyə, aydınlaşdırıcı suallar verməyə və başa düşmə yoxlaması keçirməyə hazır olduğunu söylə. 2–3 cümlə ilə cavab ver.",
+        "account_policy_user_prompt": "Tərəfdaş yazdı: «{question}»\n\nSiyasətə əsasən cavab ver. Lazım gələrsə — aydınlaşdırıcı sual ver və ya başa düşüb-düşməməsini yoxla. Qısa ol. YALNIZ kontekstdən məlumat istifadə et.",
+        "account_policy_system": "Sən inCruises siyasəti üzrə təlimçi köməkçisən. Suallara cavab ver, başa düşmə yoxlaması üçün nəzarət sualları ver, tərəfdaşları təlim et. UYDURMA — YALNIZ kontekstdəki faktlardan istifadə et.",
+        "account_btn_back_account": "◀ Hesaba qayıt",
+        "account_2fa_step_done": "✅ Etdim, növbəti addıma",
+        "account_2fa_finish": "✅ Hazırdır! Bitir",
+        "account_2fa_start": "🚀 2FA quraşdırmaya başla",
+        "btn_marketing": "📊 Marketinq planı",
+        "mkt_title": "📊 *Marketinq planı*\n\nLazım olan bölməni seçin:",
+        "mkt_ranks": "📊 Marketinq",
+        "mkt_rewards": "💰 Mükafatlar",
+        "mkt_free_membership": "🎁 Pulsuz üzvlük",
+        "mkt_ask_ai": "🤖 Gəlir haqqında sual (AI)",
+        "mkt_ranks_text": (
+            "🏆 inCruises dərəcələri:\n\n"
+            "1. Member → Partner → Senior → Director → President\n"
+            "2. Hər dərəcə əlavə liderlik bonusu açır (5%-dən 25%-ə qədər).\n"
+            "3. Dərəcə komanda həcminə və şəxsi satışlara bağlıdır.\n\n"
+            "💰 Tərəfdaşlıq: $95, hər 6 ayda uzadılır.\n"
+            "💎 Classic-ə ilk giriş: $295 (Classic tarifi + tərəfdaşlıq, bir dəfə).\n\n"
+            "Dərəcə nə qədər yüksəkdirsə — bütün strukturun dövriyyəsindən bonuslar bir o qədər çox!"
+        ),
+        "mkt_free_text": (
+            "🎁 Pulsuz üzvlük:\n\n"
+            "Aylıq töhvən $100 ödənilir, əgər ŞƏRTLƏRDƏN BİRİ yerinə yetirilərsə:\n\n"
+            "• 5 nəfər aylıq aktivdir (hər biri öz hesabına $100/ay ödəyir)\n"
+            "• 1 Premium tarifində aktivasiya\n"
+            "• 3 Classic tarifində qoşulma\n\n"
+            "Əslində sən səyahət edirsən və qazanırsan — üzvlük üçün ödəmirsen!"
+        ),
+        "mkt_ranks_ai_prompt": "inCruises dərəcələri və bonusları haqqında strukturlaşdırılmış danış. Daxil et: dərəcələr (MD, SMD, RD, ND, ID, ED, BOD və yuxarı), Komanda Liderlik bonusu cədvəli, 5 gəlir mənbəyi, 5 mükafat, ödəniş tarixləri. YALNIZ kontekstdən məlumat istifadə et. Cavab azərbaycanca, qısa və rəqəmlərlə.",
+        "mkt_free_ai_prompt": "inCruises pulsuz üzvlüyü haqqında ətraflı danış. Daxil et: 3 ixtisas yolu (5 aktiv, 1 PREMIUM, 3 Classic), nə əldə edirsən (200 BP, töhvə silinmir), vacib qaydalar. YALNIZ kontekstdən məlumat istifadə et. Cavab azərbaycanca, strukturlaşdırılmış.",
+        "mkt_rewards_ai_prompt": "«Mükafatlar» faylından tam mətnə əsaslanaraq inCruises gəlir və mükafat proqramı haqqında danış: 5 gəlir mənbəyi, 5 mükafat, dərəcələr və KLB, ödəniş tarixləri. Cavabı strukturlaşdır, YALNIZ kontekstdən məlumat istifadə et. Cavab azərbaycanca, rəqəmlərlə.",
+        "mkt_ask_prompt": "✏️ Gəlir və ya dərəcələr haqqında sualını yaz.\n\nMəsələn: «5 nəfər qoşsam nə qədər qazanaram?»",
+        "mkt_thinking": "⏳ InLeader hesablayır...",
+        "mkt_ai_prompt": "inCruises tərəfdaşı marketinq planı haqqında sual verir: {question}. Qısa, dəqiq, rəqəmlərlə cavab ver. Dəqiq hesab üçün məlumat çatışmazsa — nəzakətlə soruş. Rəsmi klub marketinq planına əsaslan. Cavab azərbaycanca ver.",
+        "btn_tracker": "🎯 Əməliyyat trekkeri",
+        "trk_title": "🎯 Bu gün üçün minimum plan. Ediləni qeyd et:",
+        "trk_contacts": "5 yeni əlaqə",
+        "trk_followup": "10 toxunma/follow-up",
+        "trk_content": "2 stori / 1 post",
+        "trk_study": "30 dəq təlim",
+        "trk_finish": "🏁 Günü bitir",
+        "trk_all_done": "🚀 Sən super-lidersən! Bütün tapşırıqlar tamamlandı! Belə davam et!",
+        "trk_all_done_coins": "🎉 Təbriklər! Bu günkü planı tamamladın və +10 InCoins 🪙 qazandın! Davam et!",
+        "trk_coins_already": "🚀 Plan tamamlandı! Bu gün üçün ballar artıq verildi, sabah qayıt 😉",
+        "trk_partial": "💪 Əla başlanğıc! {done}/{total} tamamlandı. Sabah qalanı bitirəcəyik!",
+        "trk_streak_hint": "🔥 Strik: {streak} gün ardıcıl. Proqressi itirməmək üçün bugün trekkeri bağla!",
+        "trk_do_all_first": "Əvvəlcə bütün əməliyyatları yerinə yetir!",
+        "trk_all_done_already": "Bu gün üçün bütün tapşırıqları artıq tamamladın! 🎉",
+        "trk_ask_report": "Əla! Amma sadəcə düyməyə basmaq kifayət deyil. Qısa hesabat yaz: bu gün kimə zəng etdin/yazdın? Hansı etirazlar və ya uğurlar oldu?",
+        "trk_restart_sprint": "🔄 Sprinti yenidən başlat",
+        "trk_done_today": "✅ Bu gün üçün plan tamamlandı!\n🔥 Strik: {streak} gün. Sabah davam et!",
+        "trk_choose_tz": "🌍 Sənə 20:00-da trekker xatırlatması göndərim üçün vaxt zonasını seç:",
+        "tz_2": "UTC+2 Avropa",
+        "tz_3": "UTC+3 Moskva",
+        "tz_4": "UTC+4 Yekaterinburq",
+        "tz_5": "UTC+5 Astana/Taşkənd",
+        "tz_6": "UTC+6 Almatı/Bişkek",
+        "tz_7": "UTC+7 Novosibirsk/Banqkok",
+        "tz_8": "UTC+8 İrkutsk/Sinqapur",
+        "trk_task_done_already": "✅ Bu tapşırıq bu gün artıq tamamlandı!",
+        "trk_report_prompt": "📝 Tapşırıq haqqında hesabat: *{label}*\n\nQısa yaz: nə etdin?",
+        "trk_report_too_short": "❌ Hesabat çox qısadır. Ətraflı yaz!",
+        "trk_task_accepted": "✅ Tapşırıq qəbul edildi!",
+        "trk_sprint_reset": "🔄 Sprint sıfırlandı!",
+        "trk_reminder": "⏰ Kapitan! Saat 20:00, jurnalın boşdur! Trekkerə gəl, strik sönəcək!",
+        "crm_reminder_header": "🔔 *Xatırlatma (Follow-up):*",
+        "paywall_text": (
+            "⚠️ <b>Giriş məhdudlaşdırılıb</b>\n\n"
+            "Test dövrün və ya InCoins balansın bitdi. "
+            "Bot alətləri səni gözləyir, amma onları işə salmaq üçün balansı doldurmalısan.\n\n"
+            "💎 <b>Balansı doldur və AI ilə yaratmaya davam et!</b>\n\n"
+            "<i>Balans doldurmaq üçün məsləhətçinə və ya administrata müraciət et.</i>"
+        ),
+        "coin_deducted": "⚡️ Uğurla! 1 sikkə silindi. Qalıq: {coins} 🪙",
+        "payment_success": "✅ <b>Ödəniş uğurla tamamlandı!</b>\n\nBalansına <b>{coins} InCoins</b> 🪙 əlavə edildi.\nÖdəniş məbləği: {amount:.2f} ₽",
+        "payment_success_cryptopay": "💎 Təbriklər! CryptoPay ilə ödəniş uğurla tamamlandı. Balans dolduruldu.",
+        "blocked_msg": "🚫 Bota girişin administrator tərəfindən bloklanıb.",
+        "welcome_back": "Qayıtdığın üçün salam, {name}! 👋\n\nBalansında <b>{coins} InCoins</b> 🪙 qaldı.",
+        "wallet_text": "💳 <b>Balansınız:</b>\n\nMövcud: <b>{coins} InCoins</b> 🪙\n\n<i>💡 1 İİ yaradılması = 1 InCoin.</i>",
+        "test_mode_text": (
+            "⚙️ <b>Diqqət: Test rejimi</b>\n\n"
+            "InLeader-ə qapalı beta rejimində giriş əldə etdiniz. "
+            "İİ funksiyalarını pulsuz test etmək üçün <b>5 InCoins</b> 🪙 verildi.\n\n"
+            "📉 <b>Qiymət:</b> 1 yaradılma = 1 InCoin.\n"
+            "Sikkələr bitəndə balans doldurulana qədər İİ-ə giriş dayandırılacaq.\n\n"
+            "Alətlərimizin gücünü qiymətləndirmək üçün sikkələri ağıllı istifadə edin! 🚢"
+        ),
+        "name_friend": "dost",
+        "balance_screen": "💳 <b>Balansınız</b>\n\nMövcud: <b>{coins} InCoins</b> 🪙\n\n<i>1 İİ yaradılması = 1 InCoin</i>\n\nToplama məbləğini seçin:",
+        "balance_topup_text": "💳 <b>{amount} ₽ yükləmə</b>\n\n1 ₽ = 1 InCoin\nÖdənişdən sonra <b>{amount} InCoins</b> alacaqsınız.\n\nÖdənişə keçmək üçün düyməyə basın:",
+        "balance_payment_error": "❌ Ödənişlərin quraşdırılmasında xəta. Administrata müraciət edin.",
+        "tariff_desc": "InLeader AI alətlərinə giriş üçün InCoins paketi seçin. InCoins kontent yaratmağa, etirazları işləməyə və profil auditinə imkan verir.",
+        "tariff_title": "💎 <b>InCoins tarifləri</b>\n\n{desc}\n\nPaket seçin:",
+        "tariff_trial": "Proba",
+        "tariff_standard": "Standart",
+        "tariff_leader": "Lider",
+        "tariff_pay_text": "💎 <b>{label}</b> — {coins} InCoins\n\nÖdəniş məbləği: <b>{amount} ₽</b>\n\nÖdənişə keçmək üçün düyməyə basın:",
+        "admin_free": "👑 Administrator botdan pulsuz istifadə edir.",
+        "tariff_error": "❌ Tarif seçimində xəta.",
+        "btn_calc": "🧮 Kalkulyator",
+        "calc_title": "🧮 *Kalkulyator*\n\nHesablama növü seç:",
+        "calc_tourist_btn": "🏖 Turist kalkulyatoru",
+        "calc_cruise_btn": "🚢 Kruiz BB hesabı",
+        "calc_conversion_btn": "🔄 BB konvertasiyası (Əlavə ödənişsiz)",
+        "calc_conversion_ask": (
+            "Kruizun qiymətini və vergi/rüsum məbləğini yaz (bildiksə).\n\n"
+            'Məsələn: "Kamu 3500 və rüsum 350" və ya sadəcə "3500" '
+            "(onda rüsumu təxminən 10% hesablayacağam)."
+        ),
+        "calc_conversion_parse_error": "❌ Rəqəmlər çıxarılmadı. Məsələn yaz: «3500» və ya «kamu 3500, rüsum 350».",
+        "calc_conversion_receipt": (
+            "🧾 KONVERTASİYALI kruiz hesabı (ƏLAVƏ ÖDƏNİŞSİZ):\n\n"
+            "💰 Əsas qiymət: ${price}\n"
+            "➖ Mövcud ballar (50%): {standard_points} BB\n"
+            "🔄 Konvertasiya 2-ə 1: {converted_points} BB\n"
+            "⚓️ Təxmini qiymət: {subtotal} BB\n"
+            "📑 Vergilər və rüsumlar: ${fees}\n"
+            "=======================\n"
+            "🔥 Ümumi silinəcək: {final_total} BB (Kartdan sıfır əlavə!)"
+        ),
+        "calc_bad_number": "⚠️ Müsbət tam ədəd daxil et.",
+        "calc_tourist_ask": "🏖 Neçə ay ballar toplamağı planlaşdırırsan?\n\nTöhvə: $100/ay → 200 Reward Points/ay.",
+        "calc_tourist_header": "🏖 Ballar toplama cədvəli:",
+        "calc_tourist_row": "  Ay {month}: yatırılıb {paid}, ballar {points}",
+        "calc_tourist_total": "📊 Ümumi: yatırılıb {total_paid}, toplandı {total_points} RP",
+        "calc_tourist_tip": "💡 Ballar kruiz bronlaşdırarkən endirim kimi tətbiq olunur!",
+        "calc_cruise_ask_price": (
+            "🚢 inCruises-də kruiz qiymətini (USD) daxil et.\n\n"
+            "Məsələn: 5845"
+        ),
+        "calc_cruise_ask_rp": (
+            "Əla! İndi yığdığın Bonus Ballarını (BB) daxil et.\n\n"
+            "Məsələn: 1200"
+        ),
+        "calc_cruise_header": "🚢 Kruiz qiyməti hesabı:",
+        "calc_cruise_listed": "📋 inCruises siyahı qiyməti:   ${price}",
+        "calc_cruise_insider": "🏷 INsider Pricing (−17%):        ${price}   (qənaət ${save})",
+        "calc_cruise_rp_avail": "💎 Sənin BB:  {rp} bal = ${value} dəyər",
+        "calc_cruise_rp_usable": "✅ Kruizə tətbiq (maks. 50%): {rp} BB = ${value}",
+        "calc_cruise_rp_not_enough": "⚠️ BB-n ({rp}) 50%-ə çatmır. Bütün {rp} BB tətbiq edirik.",
+        "calc_cruise_cash": "💵 Nağd ödəniş:      ${cash}",
+        "calc_cruise_savings": "🎉 Ümumi qənaət:              ${save} (siyahı qiymətdən)",
+        "calc_cruise_partner_tip": (
+            "💡 Pulsuz üzvlüklü tərəfdaşsansa — töhvələrin bonuslarla ödənilir,\n"
+            "   real xərclər daha azdır!\n"
+            "🏆 Dərəcəli tərəfdaşlar pulsuz qazandıqları ballarla 100%-ə qədər ödəyə bilər."
+        ),
+        "calc_cruise_booking_tip": "📅 Bonus ballar kruizə 90+ gün qalmış bronlaşdıranda tətbiq olunur.",
+        "calc_image_caption": "🖼 Saxla və ya storiyə göndər!",
+        "calc_free_member": "🎁 Pulsuz üzvlük",
+        "calc_free_member_text": "Pulsuz üzvlük şərtləri:\n\n1. 5 aktiv klub üzvü\n2. VƏ YA 1 Premium tarifində aktivasiya\n3. VƏ YA 3 Classic tarifində qoşulma\n\nŞərtlərdən biri yerinə yetiriləndə hər ay 200 BB pulsuz alırsan!",
+        "sim_title": "🎭 *AI-Satış treyneri*\n\nMəşq üçün müştəri profilini seç:",
+        "sim_persona_biz": "💼 Sahibkar (Şübhəli, vaxtı yoxdur)",
+        "sim_persona_mom": "👶 Doğuş məzuniyyətində ana (İstirahət istəyir, büdcədən narahat)",
+        "sim_persona_tourist": "🏖 Turist (Türkiyəni sevir, kruizləri başa düşmür)",
+        "sim_start_status": "⏳ Müştəri chata qoşulur...",
+        "sim_stop_btn": "🛑 Bitir və təhlil al",
+        "sim_analyzing": "⏳ InLeader dialoqu təhlil edir...",
+        "sim_review_prompt": (
+            "Bu inCruises satış dialoqunu təhlil et.\n"
+            "Tərəfdaşın güclü tərəflərini və səhvlərini göstər.\n"
+            "Konkret təkmilləşdirmə məsləhətləri ver.\n"
+            "1-dən 10-a qiymət ver.\n"
+            "Cavab azərbaycanca ver.\n\nDialoq:\n{dialogue}"
+        ),
+        "sim_no_messages": "⚠️ Dialoq boşdur — müştəriyə ən azı bir mesaj yaz.",
+        "sim_ended": "✅ Məşq tamamlandı! Budur təhlil:",
+        "sim_persona_student": "🎓 Tələbə (Hər şeyi dərhal istəyir, dostların rəyindən qorxur)",
+        "sim_persona_pensioner": "👵 Pensiyaçı (Səyahət etmək istəyir, aldanmaqdan qorxur)",
+        "sim_persona_office": "👔 Ofis işçisi (İstəfa arzulayır, riskdən qorxur)",
+        "sim_persona_blogger": "📸 Bloqqer (Kontent lazımdır, «satmaq» istəmir)",
+        "sim_persona_entrepreneur": "🏠 Sahibkar (Sistem axtarır, şəbəkəyə inanmır)",
+        "sim_persona_skeptic": "🤨 Şübhəli tərəfdaş (Faktlar və qanuniliük tələb edir)",
+        "btn_crm": "📅 CRM və Xatırlatmalar",
+        "crm_title": "📅 CRM və Xatırlatmalar (Follow-up)\n\nƏməliyyat seç:",
+        "crm_add_reminder": "➕ Xatırlatma əlavə et",
+        "crm_list_reminders": "📋 Xatırlatmalarım",
+        "crm_ask_task": (
+            "✏️ Nə haqqında və nə vaxt xatırlatım?\n\n"
+            "Məsələn:\n"
+            "• «Sabah 14:00-də Annaya pulsuz haqqında yaz»\n"
+            "• «2 saatdan sonra İvana zəng et»\n"
+            "• «Cümə 10:00-da Katyaya kruiz videosu göndər»"
+        ),
+        "crm_thinking": "⏳ Tapşırığı təhlil edirəm...",
+        "crm_confirmed": "✅ Yaxşı! Sənə xatırladacağam:\n\n📌 {task}\n🕐 {dt}",
+        "crm_parse_error": "❌ Tarix/vaxt tanınmadı. Daha dəqiq yaz, məsələn: «Sabah 15:00-də İvana zəng et».",
+        "crm_past_date": "❌ Göstərilən vaxt keçib. Gələcək tarix göstər.",
+        "crm_no_reminders": "📭 Aktiv xatırlatmalar yoxdur.",
+        "crm_list_header": "📋 Aktiv xatırlatmalar:\n",
+        "btn_onboarding": "🚀 InCruises yenicə başlayan",
+        "ob_tourist": "🏖️ Turist (Klub imtiyazları +)",
+        "ob_partner": "💼 Tərəfdaş (Biznes və gəlir)",
+        "ob_navigator": "🚀 AI-Navigator: Uğur planım",
+        "ob_welcome": "👋 InCruises komandasına xoş gəldin!\n\nSənə şəxsi inkişaf planı hazırlamağım üçün hazırkı məqsədini seç:",
+        "ob_ask_goal": (
+            "👋 Komandaya xoş gəldin!\n\n"
+            "Mənə maksimum faydalı məsləhətlər vermək üçün tanış olaq. "
+            "Bir-iki cümlədə yaz: sən daha çox səyahət üçün gəlirsən, "
+            "yoxsa güclü biznes qurmaq və passiv gəlir əldə etmək istəyirsən?"
+        ),
+        "ob_thinking": "⏳ InLeader şəxsi planını hazırlayır...",
+        "btn_analyzer": "🧠 Görüş analitiki",
+        "btn_mentor": "🧠 AI-Mentor",
+        "mentor_title": "🧠 <b>Şəxsi Direktorlar Şuran səndə cavab verir!</b>\n\nBurada boş sözlər yoxdur — yalnız dərin təhlil və strategiyalar. Hansı sahəni inkişaf etdirək? Mütəxəssis seç:",
+        "mentor_mindset": "🧠 Mindsət və Düşüncə",
+        "mentor_sales": "💰 Satış Sənəti",
+        "mentor_coaching": "🎯 Strateji Kouçinq",
+        "mentor_management": "👥 Liderlik və Menecment",
+        "mentor_psychology": "🧘‍♂️ Təsir Psixologiyası",
+        "mentor_mlm": "🌐 MLM və Miqyaslaşdırma",
+        "mentor_ask": "Əla seçim. Hazıram. Cari vəziyyətini və ya sualını təsvir et:",
+        "analyzer_ask": (
+            "🧠 Müştərilə görüş və ya zəngin necə keçdiyini təsvir et.\n\n"
+            "Sən nə dedin? Müştəri nə cavab verdi? Dialoq harada tıxandı?\n"
+            "Nə qədər ətraflı yazsan, təhlil bir o qədər dəqiq olacaq!"
+        ),
+        "analyzer_thinking": "⏳ InLeader dialoqu təhlil edir...",
+        "btn_leaderboard": "🏆 Komanda reytinqi",
+        "lb_header": "📊 Ən aktiv 10 tərəfdaş:\n",
+        "lb_empty": "🏆 Reyting hələ boşdur. Əvvəlcə trekkeri tamamla və lider ol! 🚀",
+        "btn_documents": "📄 Sənədlər",
+        "btn_images": "🎨 AI Şəkillər",
+        "doc_title": "📄 *Sənədlər*\n\nBölmə seçin:",
+        "doc_cruise_protection": "🛡 Kruiz müdafiəsi",
+        "doc_thinking": "⏳ InLeader cavab hazırlayır...",
+        "doc_cruise_protection_prompt": "«Kruiz müdafiəsi» faylına əsasən kruiz müdafiəsi haqqında danış: şərtlər, nə daxildir, necə işləyir. YALNIZ kontekstdən məlumat istifadə et. Cavab azərbaycanca.",
+    },
     # ── English ──────────────────────────────────────────────
     "en": {
         "choose_lang": "🌍 Choose your language:",
+        "lang_stub": "✅ Language saved!",
         "welcome": (
             "Hi! I'm *InLeader* 🚢\n\n"
             "I'll help you craft posts and handle objections.\n"
@@ -301,6 +722,15 @@ TEXTS: dict[str, dict[str, str]] = {
         "btn_menu": "📋 Menu",
         "menu_reply_hint": "⬇️ Menu button — always at hand",
         "btn_back_menu": "🏠 Back to menu",
+        "btn_back": "🔙 Back",
+        "btn_balance": "💰 My balance",
+        "btn_topup": "💰 Top up",
+        "btn_tariffs": "💎 Tariffs",
+        "btn_registration": "📝 Registration",
+        "btn_referral": "🔗 Referral",
+        "btn_continue": "🚀 Continue",
+        "btn_pay": "💳 Pay",
+        "btn_pay_amount": "💳 Pay {amount}₽",
         "btn_copywriter": "✍️ Smart Copywriter",
         "btn_objections": "🛡 Objection Database",
         "btn_change_lang": "🌍 Change language",
@@ -346,6 +776,9 @@ TEXTS: dict[str, dict[str, str]] = {
         "account_policy_user_prompt": "Partner wrote: «{question}»\n\nAnswer based on the policy. If appropriate, ask a follow-up or check understanding. Be concise. Use ONLY context data.",
         "account_policy_system": "You're a policy educator for inCruises. Answer questions, ask check questions, train partners. DO NOT invent — use ONLY facts from context.",
         "account_btn_back_account": "◀ Back to account",
+        "account_2fa_step_done": "✅ Done, next step",
+        "account_2fa_finish": "✅ Done! Finish",
+        "account_2fa_start": "🚀 Start 2FA setup",
         # marketing
         "btn_marketing": "📊 Marketing Plan",
         "mkt_title": "📊 *Marketing Plan*\n\nChoose a section:",
@@ -370,6 +803,56 @@ TEXTS: dict[str, dict[str, str]] = {
         "trk_all_done_coins": "🎉 Congrats! You completed today's plan and earned +10 InCoins 🪙! Keep going!",
         "trk_coins_already": "🚀 Plan done! Points for today are already awarded, come back tomorrow 😉",
         "trk_partial": "💪 Great start! Completed {done} out of {total}. Let's crush the rest tomorrow!",
+        "trk_restart_sprint": "🔄 Restart sprint",
+        "trk_done_today": "✅ Today's plan done!\n🔥 Your streak: {streak} days. Come back tomorrow to continue!",
+        "trk_choose_tz": "🌍 To remind you about the tracker at 8 PM, choose your timezone:",
+        "tz_2": "UTC+2 Europe",
+        "tz_3": "UTC+3 Moscow",
+        "tz_4": "UTC+4 Yekaterinburg",
+        "tz_5": "UTC+5 Astana/Tashkent",
+        "tz_6": "UTC+6 Almaty/Bishkek",
+        "tz_7": "UTC+7 Novosibirsk/Bangkok",
+        "tz_8": "UTC+8 Irkutsk/Singapore",
+        "trk_task_done_already": "✅ This task is already done today!",
+        "trk_report_prompt": "📝 Task report: *{label}*\n\nBriefly describe what you did:",
+        "trk_report_too_short": "❌ Report too short. Please elaborate!",
+        "trk_task_accepted": "✅ Task accepted!",
+        "trk_sprint_reset": "🔄 Sprint reset!",
+        "trk_reminder": "⏰ Captain! It's 8 PM and your Journal is empty! Open the Tracker or your streak will burn!",
+        "crm_reminder_header": "🔔 *Reminder (Follow-up):*",
+        "paywall_text": (
+            "⚠️ <b>Access restricted</b>\n\n"
+            "Your trial or InCoins balance has run out. "
+            "The bot tools are waiting, but you need to top up your balance to use them.\n\n"
+            "💎 <b>Top up your balance and keep creating with AI!</b>\n\n"
+            "<i>Contact your mentor or admin to top up.</i>"
+        ),
+        "coin_deducted": "⚡️ Success! 1 coin deducted. Balance: {coins} 🪙",
+        "payment_success": "✅ <b>Payment successful!</b>\n\n<b>{coins} InCoins</b> 🪙 added to your balance.\nAmount paid: {amount:.2f} ₽",
+        "payment_success_cryptopay": "💎 Congratulations! CryptoPay payment completed successfully. Balance topped up.",
+        "blocked_msg": "🚫 Your access to the bot has been blocked by the administrator.",
+        "welcome_back": "Welcome back, {name}! 👋\n\nYou have <b>{coins} InCoins</b> 🪙 left on your balance.",
+        "wallet_text": "💳 <b>Your wallet:</b>\n\nAvailable: <b>{coins} InCoins</b> 🪙\n\n<i>💡 1 AI generation = 1 InCoin.</i>",
+        "test_mode_text": (
+            "⚙️ <b>Attention: Test mode</b>\n\n"
+            "You have access to InLeader in closed beta. "
+            "You received <b>5 InCoins</b> 🪙 for free AI testing.\n\n"
+            "📉 <b>Cost:</b> 1 generation = 1 InCoin.\n"
+            "When coins run out, AI access will be paused until you top up.\n\n"
+            "Use your coins wisely to experience our tools! 🚢"
+        ),
+        "name_friend": "friend",
+        "balance_screen": "💳 <b>Your wallet</b>\n\nAvailable: <b>{coins} InCoins</b> 🪙\n\n<i>1 AI generation = 1 InCoin</i>\n\nChoose top-up amount:",
+        "balance_topup_text": "💳 <b>Top up {amount} ₽</b>\n\n1 ₽ = 1 InCoin\nAfter payment you'll receive <b>{amount} InCoins</b>.\n\nTap the button below to pay:",
+        "balance_payment_error": "❌ Payment configuration error. Contact the administrator.",
+        "tariff_desc": "Choose an InCoins package for access to InLeader AI tools. InCoins enable content generation, objection handling, and profile audits.",
+        "tariff_title": "💎 <b>InCoins Tariffs</b>\n\n{desc}\n\nChoose a package:",
+        "tariff_trial": "Trial",
+        "tariff_standard": "Standard",
+        "tariff_leader": "Leader",
+        "tariff_pay_text": "💎 <b>{label}</b> — {coins} InCoins\n\nAmount to pay: <b>{amount} ₽</b>\n\nTap the button below to proceed to payment:",
+        "admin_free": "👑 Administrator uses the bot for free.",
+        "tariff_error": "❌ Tariff selection error.",
         # calculator
         "btn_calc": "🧮 Calculator",
         "calc_title": "🧮 *Calculator*\n\nChoose a calculation type:",
@@ -421,6 +904,12 @@ TEXTS: dict[str, dict[str, str]] = {
         ),
         "sim_no_messages": "⚠️ The dialogue is empty — write at least one message to the client.",
         "sim_ended": "✅ Training complete! Here's your review:",
+        "sim_persona_student": "🎓 Student (Wants everything now, fears friends' opinion)",
+        "sim_persona_pensioner": "👵 Retiree (Wants to travel, fears being scammed)",
+        "sim_persona_office": "👔 Office worker (Dreams of quitting, fears risk)",
+        "sim_persona_blogger": "📸 Blogger (Needs content, doesn't want to 'sell')",
+        "sim_persona_entrepreneur": "🏠 Entrepreneur (Seeks system, doesn't believe in MLM)",
+        "sim_persona_skeptic": "🤨 Skeptic partner (Asks for facts and legality)",
         # crm
         "btn_crm": "📅 CRM & Reminders",
         "crm_title": "📅 CRM & Reminders (Follow-up)\n\nChoose an action:",
@@ -441,13 +930,20 @@ TEXTS: dict[str, dict[str, str]] = {
         "crm_list_header": "📋 Your active reminders:\n",
         # onboarding
         "btn_onboarding": "🚀 Newcomer Launch",
-        "ob_welcome": (
-            "👋 Welcome to the team!\n\n"
-            "To get started quickly and avoid mistakes, complete this short quest.\n"
-            "Ready?"
-        ),
+        "ob_tourist": "🏖️ Tourist (Club benefits +)",
+        "ob_partner": "💼 Partner (Business & income)",
+        "ob_navigator": "🚀 AI Navigator: My success plan",
+        "ob_welcome": "👋 Welcome to InCruises!\n\nTo prepare your personal development plan, choose your current goal:",
         # analyzer
         "btn_analyzer": "🧠 Meeting Analyzer",
+        "mentor_title": "🧠 <b>Your personal Board of Directors is on call!</b>\n\nNo fluff — only deep analysis and strategies. Choose an expert to work with:",
+        "mentor_mindset": "🧠 Mindset & Thinking",
+        "mentor_sales": "💰 Art of Sales",
+        "mentor_coaching": "🎯 Strategic Coaching",
+        "mentor_management": "👥 Leadership & Management",
+        "mentor_psychology": "🧘‍♂️ Psychology of Influence",
+        "mentor_mlm": "🌐 MLM & Scaling",
+        "mentor_ask": "Great choice. I'm ready. Describe your situation or ask your question:",
         "analyzer_ask": (
             "🧠 Describe how your meeting or call with a client went.\n\n"
             "What did you say? What did the client reply? Where did the conversation stall?\n"
@@ -469,12 +965,26 @@ TEXTS: dict[str, dict[str, str]] = {
     # ── Kazakh ───────────────────────────────────────────────
     "kk": {
         "choose_lang": "🌍 Тілді таңдаңыз / Choose language:",
+        "lang_stub": "✅ Тіл сақталды!",
         "welcome": (
             "Сәлем! Мен *InLeader* 🚢\n\n"
             "Посттар дайындауға және қарсылықтарды өңдеуге көмектесемін.\n"
             "Бастау үшін төмендегі батырманы басыңыз:"
         ),
         "menu_placeholder": "Әрекетті таңдаңыз",
+        "menu_choose": "📋 Бөлімді таңдаңыз:",
+        "menu_reply_hint": "⬇️ «Меню» батырмасы — әрқашан қолыңда",
+        "btn_back_menu": "🏠 Менюге",
+        "btn_back": "🔙 Артқа",
+        "btn_menu": "📋 Меню",
+        "btn_balance": "💰 Менің балансым",
+        "btn_topup": "💰 Толықтыру",
+        "btn_tariffs": "💎 Тарифтер",
+        "btn_registration": "📝 Тіркеу",
+        "btn_referral": "🔗 Реферал",
+        "btn_continue": "🚀 Жалғастыру",
+        "btn_pay": "💳 Төлеу",
+        "btn_pay_amount": "💳 {amount}₽ төлеу",
         "btn_copywriter": "✍️ Ақылды копирайтер",
         "btn_objections": "🛡 Қарсылықтар базасы",
         "btn_change_lang": "🌍 Тілді ауыстыру",
@@ -505,6 +1015,11 @@ TEXTS: dict[str, dict[str, str]] = {
         ),
         "error_objection": "❌ Жауап дайындалмады.",
         # media
+        "btn_account": "👤 Тіркелгіде жұмыс",
+        "account_title": "👤 *Тіркелгіде жұмыс*\n\nБөлімді таңдаңыз:",
+        "account_2fa_step_done": "✅ Орындадым, келесі қадамға",
+        "account_2fa_finish": "✅ Дайын! Аяқтау",
+        "account_2fa_start": "🚀 2FA орнатуды бастау",
         "btn_media": "🗂 Медиа және сілтемелер",
         "media_title": "📂 *Команда материалдары*\n\nТөмендегі бөлімді таңдаңыз:",
         "media_site": "🌐 Біздің сайт",
@@ -537,6 +1052,56 @@ TEXTS: dict[str, dict[str, str]] = {
         "trk_all_done_coins": "🎉 Құттықтаймыз! Бүгінгі жоспар орындалды, +10 InCoins 🪙 алдың! Жалғастыр!",
         "trk_coins_already": "🚀 Жоспар орындалды! Бүгінгі ұпайлар бұрын берілген, ертең қайт 😉",
         "trk_partial": "💪 Тамаша бастама! {done}/{total} орындалды. Ертең қалғанын аяқтаймыз!",
+        "trk_restart_sprint": "🔄 Спринтті қайта бастау",
+        "trk_done_today": "✅ Бүгінгі жоспар орындалды!\n🔥 Стрик: {streak} күн. Ертең жалғастыру үшін қайт!",
+        "trk_choose_tz": "🌍 Сені 20:00-да трекер туралы еске салу үшін уақыт белдеуін таңда:",
+        "tz_2": "UTC+2 Еуропа",
+        "tz_3": "UTC+3 Мәскеу",
+        "tz_4": "UTC+4 Екатеринбург",
+        "tz_5": "UTC+5 Астана/Ташкент",
+        "tz_6": "UTC+6 Алматы/Бишкек",
+        "tz_7": "UTC+7 Новосибирск/Бангкок",
+        "tz_8": "UTC+8 Иркутск/Сингапур",
+        "trk_task_done_already": "✅ Бұл тапсырма бүгін орындалды!",
+        "trk_report_prompt": "📝 Тапсырма бойынша есеп: *{label}*\n\nҚысқаша жазыңыз: не істедіңіз?",
+        "trk_report_too_short": "❌ Есеп тым қысқа. Толығырақ жазыңыз!",
+        "trk_task_accepted": "✅ Тапсырма қабылданды!",
+        "trk_sprint_reset": "🔄 Спринт қайта басталды!",
+        "trk_reminder": "⏰ Капитан! 20:00, журналың бос! Трекерге кір, стрик өшеді!",
+        "crm_reminder_header": "🔔 *Еске салу (Follow-up):*",
+        "paywall_text": (
+            "⚠️ <b>Қол жеткізу шектелген</b>\n\n"
+            "Сынақ кезеңің немесе InCoins балансың таусылды. "
+            "Бот құралдары сені күтуде, бірақ оларды қолдану үшін балансыңды толтыру керек.\n\n"
+            "💎 <b>Балансыңды толтыр және AI-мен жасауын жалғастыр!</b>\n\n"
+            "<i>Балансты толтыру үшін наставникке немесе әкімшіге хабарлас.</i>"
+        ),
+        "coin_deducted": "⚡️ Сәтті! 1 монета алынды. Қалдық: {coins} 🪙",
+        "payment_success": "✅ <b>Төлем сәтті өтті!</b>\n\nБалансыңа <b>{coins} InCoins</b> 🪙 қосылды.\nТөлем сомасы: {amount:.2f} ₽",
+        "payment_success_cryptopay": "💎 Құттықтаймыз! CryptoPay төлемі сәтті өтті. Баланс толтырылды.",
+        "blocked_msg": "🚫 Ботқа қол жеткізу әкімші тарапынан бұғатталды.",
+        "welcome_back": "Қайтқаныңызбен, {name}! 👋\n\nБалансыңда <b>{coins} InCoins</b> 🪙 қалды.",
+        "wallet_text": "💳 <b>Әмиян:</b>\n\nҚол жетімді: <b>{coins} InCoins</b> 🪙\n\n<i>💡 1 ИИ генерация = 1 InCoin.</i>",
+        "test_mode_text": (
+            "⚙️ <b>Назар: Сынақ режимі</b>\n\n"
+            "InLeader-ге жабық бета режимінде қол жеткіздіңіз. "
+            "ИИ функцияларын тегін тексеру үшін <b>5 InCoins</b> 🪙 берілді.\n\n"
+            "📉 <b>Құны:</b> 1 генерация = 1 InCoin.\n"
+            "Монеталар біткенше баланс толтырғанша ИИ-ге қол жеткізу тоқтатылады.\n\n"
+            "Құралдарымыздың күшін бағалау үшін монеталарды ақылы пайдаланыңыз! 🚢"
+        ),
+        "name_friend": "дос",
+        "balance_screen": "💳 <b>Әмиян</b>\n\nҚол жетімді: <b>{coins} InCoins</b> 🪙\n\n<i>1 ИИ генерация = 1 InCoin</i>\n\nТолықтыру сомасын таңдаңыз:",
+        "balance_topup_text": "💳 <b>{amount} ₽ толықтыру</b>\n\n1 ₽ = 1 InCoin\nТөлемнен кейін <b>{amount} InCoins</b> аласыз.\n\nТөлемге өту үшін батырманы басыңыз:",
+        "balance_payment_error": "❌ Төлемді баптау қатесі. Әкімшіге хабарласыңыз.",
+        "tariff_desc": "InLeader AI құралдарына қол жеткізу үшін InCoins пакетін таңдаңыз. InCoins контент жасауға, қарсылықтарды өңдеуге және профильді аудит жасауға мүмкіндік береді.",
+        "tariff_title": "💎 <b>InCoins тарифтері</b>\n\n{desc}\n\nПакетті таңдаңыз:",
+        "tariff_trial": "Сынақ",
+        "tariff_standard": "Стандарт",
+        "tariff_leader": "Лидер",
+        "tariff_pay_text": "💎 <b>{label}</b> — {coins} InCoins\n\nТөлем сомасы: <b>{amount} ₽</b>\n\nТөлемге өту үшін батырманы басыңыз:",
+        "admin_free": "👑 Әкімші ботты тегін пайдаланады.",
+        "tariff_error": "❌ Тариф таңдау қатесі.",
         # calculator
         "btn_calc": "🧮 Калькулятор",
         "calc_title": "🧮 *Калькулятор*\n\nЕсептеу түрін таңда:",
@@ -581,6 +1146,12 @@ TEXTS: dict[str, dict[str, str]] = {
         ),
         "sim_no_messages": "⚠️ Диалог бос — клиентке кем дегенде бір хабарлама жаз.",
         "sim_ended": "✅ Жаттығу аяқталды! Міне талдау:",
+        "sim_persona_student": "🎓 Студент (Барлығын бірден қалайды, достардың пікірінен қорқады)",
+        "sim_persona_pensioner": "👵 Зейнеткер (Саяхаттағанды қалайды, алдаудан қорқады)",
+        "sim_persona_office": "👔 Кеңсе қызметкері (Босатуды армандайды, тәуекелден қорқады)",
+        "sim_persona_blogger": "📸 Блогер (Контент керек, «сатуды» қаламайды)",
+        "sim_persona_entrepreneur": "🏠 Кәсіпкер (Жүйе іздейді, желіге сенбейді)",
+        "sim_persona_skeptic": "🤨 Скептик серіктес (Фактілер мен заңдылық сұрайды)",
         # crm
         "btn_crm": "📅 CRM және Еске салулар",
         "crm_title": "📅 CRM және Еске салулар (Follow-up)\n\nӘрекетті таңда:",
@@ -600,8 +1171,20 @@ TEXTS: dict[str, dict[str, str]] = {
         "crm_list_header": "📋 Белсенді еске салулар:\n",
         # onboarding
         "btn_onboarding": "🚀 Жаңадан бастау",
+        "ob_tourist": "🏖️ Турист (Клуб артықшылықтары +)",
+        "ob_partner": "💼 Серіктес (Бизнес және табыс)",
+        "ob_navigator": "🚀 AI-Навигатор: Менің табыс жоспарым",
+        "ob_welcome": "👋 InCruises командасына қош келдің!\n\nСенің жеке даму жоспарыңды дайындау үшін қазіргі мақсатыңды таңда:",
         # analyzer
         "btn_analyzer": "🧠 Кездесу талдаушы",
+        "mentor_title": "🧠 <b>Жеке Директорлар Кеңесің сенімен!</b>\n\nМұнда сусыз — тек терең талдау мен стратегиялар. Қай саланы дамытайық? Маман таңда:",
+        "mentor_mindset": "🧠 Майндсет және Ойлау",
+        "mentor_sales": "💰 Сату Өнері",
+        "mentor_coaching": "🎯 Стратегиялық Коучинг",
+        "mentor_management": "👥 Көшбасшылық және Менеджмент",
+        "mentor_psychology": "🧘‍♂️ Әсер Психологиясы",
+        "mentor_mlm": "🌐 MLM және Масштабтау",
+        "mentor_ask": "Тамаша таңдау. Дайынмын. Қазіргі жағдайыңды немесе сұрағыңды сипатта:",
         "analyzer_ask": (
             "🧠 Клиентпен кездесуің қалай өткенін сипатта.\n\n"
             "Сен не айттың? Клиент не жауап берді? Қай жерде диалог тұрып қалды?\n"

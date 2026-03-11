@@ -19,14 +19,38 @@ from services.db import (
     find_user_by_id_or_username,
     add_user_coins_admin,
     get_user_coins,
-    give_all_coins_admin
+    give_all_coins_admin,
+    get_usage_for_user,
+    get_usage_aggregate,
+    get_usage_costs_by_period,
+    get_usage_by_user_period,
 )
-from services.ai_service import generate_text, generate_image_ai, IMAGE_FORMAT_REELS, IMAGE_FORMAT_POST, IMAGE_MODELS
+from services.ai_service import generate_text, generate_image_ai, format_admin_footer, IMAGE_FORMAT_REELS, IMAGE_FORMAT_POST, IMAGE_MODELS
 
 router = Router()
 logger = logging.getLogger(__name__)
 
 ADMIN_ID = int(os.getenv("ADMIN_ID", "5925660014"))
+
+# task_type → русское название кнопки/раздела (как пользователь видит в меню)
+TASK_TYPE_LABELS = {
+    "copywriter": "✍️ Умный копирайтер",
+    "objections": "🛡 База возражений",
+    "simulator": "🎭 AI-Тренажер продаж",
+    "tracker_report": "🎯 Трекер действий",
+    "general": "📋 Прочее",
+    "marketing": "📊 Маркетинг-план",
+    "analyzer": "🧠 Аналитик встреч",
+    "mentor": "🧠 AI-Ментор",
+    "crm": "📅 CRM и Напоминания",
+    "registration": "📝 Регистрация",
+    "onboarding_navigator": "🚀 Запуск новичка",
+    "onboarding_chat": "🚀 Запуск новичка",
+}
+
+
+def _task_label(task_type: str) -> str:
+    return TASK_TYPE_LABELS.get(task_type, task_type)
 
 class AdminState(StatesGroup):
     waiting_for_broadcast = State()
@@ -39,6 +63,7 @@ class AdminState(StatesGroup):
     waiting_for_coin_amount = State()
     waiting_for_user_block = State()
     waiting_for_ai_letter_task = State()
+    waiting_for_analysis_user_id = State()
     waiting_for_image_model = State()
     waiting_for_image_format = State()
     waiting_for_image_prompt = State()
@@ -49,6 +74,7 @@ def get_admin_kb():
         [InlineKeyboardButton(text="📢 Рассылка всем", callback_data="admin:broadcast")],
         [InlineKeyboardButton(text="🎁 Раздать всем 10 InCoins", callback_data="admin:give_all_10")],
         [InlineKeyboardButton(text="💰 Управление InCoins", callback_data="admin:add_coins")],
+        [InlineKeyboardButton(text="📊 Анализ", callback_data="admin:analysis")],
         [InlineKeyboardButton(text="🧠 AI-Анализ партнера", callback_data="admin:ai_analyze")],
         [InlineKeyboardButton(text="🎯 Написать лично", callback_data="admin:personal_msg")],
         [InlineKeyboardButton(text="🪙 Проверка монет", callback_data="admin:check_coins")],
@@ -71,6 +97,224 @@ async def admin_back(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text("👑 Добро пожаловать в Панель Управления", reply_markup=get_admin_kb())
     await callback.answer()
+
+
+# --- АНАЛИЗ (Lama бесплатный) ---
+
+@router.callback_query(F.data == "admin:analysis")
+async def admin_analysis_menu(callback: CallbackQuery, state: FSMContext):
+    if callback.from_user.id != ADMIN_ID:
+        return
+    await state.clear()
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💰 Анализ затрат", callback_data="admin:analysis_costs")],
+        [InlineKeyboardButton(text="📈 Общий анализ", callback_data="admin:analysis_general")],
+        [InlineKeyboardButton(text="👤 Отдельный анализ", callback_data="admin:analysis_single")],
+        [InlineKeyboardButton(text="🔙 Назад", callback_data="admin:back")],
+    ])
+    await callback.message.edit_text(
+        "📊 <b>Анализ активности</b>\n\nВыбери тип отчёта:",
+        reply_markup=kb,
+        parse_mode="HTML",
+    )
+    await callback.answer()
+
+
+def _build_analysis_user_kb() -> InlineKeyboardMarkup:
+    """Список пользователей для отдельного анализа (имя + юзернейм)."""
+    users = get_all_users_admin()
+    kb = InlineKeyboardBuilder()
+    for u in users[-20:]:
+        name = u.get("full_name") or ""
+        username = u.get("username") or ""
+        label = f"{name} (@{username})" if username else (name or str(u["user_id"]))
+        if len(label) > 40:
+            label = label[:37] + "..."
+        kb.button(text=label, callback_data=f"analysis_user:{u['user_id']}")
+    kb.button(text="⌨️ Ввести ID вручную", callback_data="analysis_user:manual")
+    kb.button(text="🔙 Назад", callback_data="admin:analysis")
+    kb.adjust(1)
+    return kb.as_markup()
+
+
+@router.callback_query(F.data == "admin:analysis_costs")
+async def admin_analysis_costs_run(callback: CallbackQuery, state: FSMContext):
+    """Анализ затрат — обширная статистика: периоды, генерации, все пользователи с разбивкой."""
+    if callback.from_user.id != ADMIN_ID:
+        return
+    await callback.answer()
+    period = get_usage_costs_by_period()
+    by_user_period = get_usage_by_user_period()
+    total_cost = sum(float(u.get("cost_total", 0)) for u in by_user_period)
+
+    sorted_users = sorted(by_user_period, key=lambda x: float(x.get("cost_total", 0)), reverse=True)
+
+    lines = [
+        "💰 <b>Анализ затрат</b>\n",
+        "━━━━━━━━━━━━━━━━━━━━━",
+        "<b>Сводка по периодам (все пользователи):</b>",
+        f"  • Сегодня: {period['gen_today']} ген. | ${period['cost_today']:.4f}",
+        f"  • За 7 дней: {period['gen_7d']} ген. | ${period['cost_7d']:.4f}",
+        f"  • За месяц: {period['gen_month']} ген. | ${period['cost_month']:.4f}",
+        "━━━━━━━━━━━━━━━━━━━━━",
+        "<b>По пользователям (сегодня | 7д | мес | всего):</b>",
+        "",
+    ]
+    for i, u in enumerate(sorted_users, 1):
+        uid = u.get("user_id")
+        prof = get_user_profile(uid)
+        name = (prof.get("full_name") or prof.get("username") or f"ID{uid}") if prof else f"ID{uid}"
+        if isinstance(name, str) and len(name) > 20:
+            name = name[:17] + "..."
+        ct = float(u.get("cost_today", 0))
+        c7 = float(u.get("cost_7d", 0))
+        cm = float(u.get("cost_month", 0))
+        ctot = float(u.get("cost_total", 0))
+        gt = int(u.get("gen_today", 0))
+        g7 = int(u.get("gen_7d", 0))
+        gm = int(u.get("gen_month", 0))
+        gtot = int(u.get("gen_total", 0))
+        lines.append(f"{i}. <b>{name}</b> (ID:{uid})")
+        lines.append(f"   Сегодня: {gt} ген. | ${ct:.4f}")
+        lines.append(f"   7 дней: {g7} ген. | ${c7:.4f}")
+        lines.append(f"   Месяц: {gm} ген. | ${cm:.4f}")
+        lines.append(f"   <b>Всего: {gtot} ген. | ${ctot:.4f}</b>")
+        lines.append("")
+
+    lines.append("━━━━━━━━━━━━━━━━━━━━━")
+    lines.append(f"<b>ИТОГО (всё время):</b> ${total_cost:.4f}")
+
+    text = "\n".join(lines)
+    if len(text) > 4000:
+        text = "\n".join(lines[:45] + ["...", "━━━━━━━━━━━━━━━━━━━━━", f"<b>ИТОГО (всё время):</b> ${total_cost:.4f}"])
+    await callback.message.edit_text(text, parse_mode="HTML")
+
+
+@router.callback_query(F.data == "admin:analysis_single")
+async def admin_analysis_single_start(callback: CallbackQuery, state: FSMContext):
+    if callback.from_user.id != ADMIN_ID:
+        return
+    await state.clear()
+    await callback.message.edit_text(
+        "👤 Выбери пользователя для отчёта:",
+        reply_markup=_build_analysis_user_kb(),
+        parse_mode="HTML",
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("analysis_user:"))
+async def admin_analysis_user_selected(callback: CallbackQuery, state: FSMContext):
+    if callback.from_user.id != ADMIN_ID:
+        return
+    target = callback.data.split(":")[1]
+    if target == "manual":
+        await state.set_state(AdminState.waiting_for_analysis_user_id)
+        await callback.message.edit_text(
+            "🔍 Введи ID или @username пользователя для анализа:",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="🔙 Назад", callback_data="admin:analysis_single")]
+            ]),
+        )
+        await callback.answer()
+        return
+
+    user_id = int(target)
+    await _run_single_analysis(callback, user_id)
+    await callback.answer()
+
+
+async def _run_single_analysis(callback_or_msg, user_id: int):
+    """Отдельный анализ — чёткая структура по user_id."""
+    profile = get_user_profile(user_id)
+    usage = get_usage_for_user(user_id)
+    if not profile:
+        text = f"❌ Пользователь {user_id} не найден в базе."
+        if hasattr(callback_or_msg, "message"):
+            await callback_or_msg.message.answer(text)
+        else:
+            await callback_or_msg.answer(text)
+        return
+
+    total_cost = sum(float(u.get("cost") or 0) for u in usage)
+    by_task = {}
+    for u in usage:
+        t = u.get("task_type", "?")
+        by_task[t] = by_task.get(t, 0) + 1
+
+    name = profile.get("full_name") or profile.get("username") or str(user_id)
+    lines = [
+        "👤 <b>Отдельный анализ</b>\n",
+        "━━━━━━━━━━━━━━━━━━━━━",
+        f"<b>Пользователь:</b> {name} (ID: {user_id})",
+        f"<b>InCoins:</b> {profile.get('incoins', 0)} | <b>Стрик:</b> {profile.get('streak', 0)}",
+        "",
+        "<b>Генерации:</b>",
+        f"  • Всего: {len(usage)}",
+        f"  • Потрачено: ${total_cost:.4f}",
+        "",
+        "<b>По кнопкам (кто куда нажимал):</b>",
+    ]
+    for task, cnt in sorted(by_task.items(), key=lambda x: -x[1]):
+        label = _task_label(task)
+        lines.append(f"  • {label}: {cnt}")
+    lines.append("")
+    lines.append("━━━━━━━━━━━━━━━━━━━━━")
+
+    text = "\n".join(lines)
+    if hasattr(callback_or_msg, "message"):
+        await callback_or_msg.message.answer(text, parse_mode="HTML")
+    else:
+        await callback_or_msg.answer(text, parse_mode="HTML")
+
+
+@router.callback_query(F.data == "admin:analysis_general")
+async def admin_analysis_general_run(callback: CallbackQuery, state: FSMContext):
+    """Общий анализ — чёткая структура, без Lama."""
+    if callback.from_user.id != ADMIN_ID:
+        return
+    await callback.answer()
+    agg = get_usage_aggregate()
+    by_user = agg.get("by_user", [])
+    total_gen = agg.get("total_gen", 0)
+    total_cost = agg.get("total_cost", 0)
+    by_task = agg.get("by_task", [])
+
+    lines = [
+        "📈 <b>Общий анализ</b>\n",
+        "━━━━━━━━━━━━━━━━━━━━━",
+        "",
+        "<b>Итого:</b>",
+        f"  • Генераций: {total_gen}",
+        f"  • Потрачено: ${total_cost:.4f}",
+        "",
+        "<b>По кнопкам (кто куда нажимал):</b>",
+    ]
+    for t in sorted(by_task, key=lambda x: -x["cnt"]):
+        label = _task_label(t["task_type"])
+        lines.append(f"  • {label}: {t['cnt']}")
+    lines.append("")
+    lines.append("<b>Топ по затратам:</b>")
+
+    top_by_cost = sorted(by_user, key=lambda x: float(x.get("total_cost", 0)), reverse=True)[:15]
+    for i, u in enumerate(top_by_cost, 1):
+        uid = u.get("user_id")
+        cost = float(u.get("total_cost", 0))
+        cnt = u.get("cnt", 0)
+        prof = get_user_profile(uid)
+        name = (prof.get("full_name") or prof.get("username") or f"ID{uid}") if prof else f"ID{uid}"
+        if len(str(name)) > 20:
+            name = str(name)[:17] + "..."
+        lines.append(f"  {i}. {name} (ID:{uid}) — {cnt} ген. | ${cost:.4f}")
+
+    lines.append("")
+    lines.append("━━━━━━━━━━━━━━━━━━━━━")
+
+    text = "\n".join(lines)
+    if len(text) > 4000:
+        text = "\n".join(lines[:35] + ["... (обрезано)", "━━━━━━━━━━━━━━━━━━━━━"])
+    await callback.message.edit_text(text, parse_mode="HTML")
+
 
 # --- СПИСОК ПОЛЬЗОВАТЕЛЕЙ ДЛЯ ВЫБОРА ---
 
@@ -143,6 +387,28 @@ async def admin_coin_amount_final(message: Message, state: FSMContext):
 
 # --- ОСТАЛЬНОЕ БЕЗ ИЗМЕНЕНИЙ ---
 
+@router.callback_query(F.data == "admin:users_list")
+async def admin_users_list(callback: CallbackQuery):
+    """Список пользователей — ID, имя, username, стрик, статус блокировки."""
+    if callback.from_user.id != ADMIN_ID:
+        return
+    users = get_all_users_admin()
+    text = "<b>👥 Список пользователей</b>\n\n"
+    for u in users:
+        status = "🔴 ЗАБЛОКИРОВАН" if u.get("is_blocked") else "🟢"
+        name = u.get("full_name") or ""
+        username = u.get("username") or ""
+        label = f"{name} (@{username})" if username else (name or f"ID{u['user_id']}")
+        if len(label) > 35:
+            label = label[:32] + "..."
+        text += f"• {label} | ID:{u['user_id']} | Стрик:{u.get('streak', 0)} {status}\n"
+    if len(text) > 4000:
+        text = text[:3970] + "\n... (обрезано)"
+    kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Назад", callback_data="admin:back")]])
+    await callback.message.edit_text(text, reply_markup=kb, parse_mode=ParseMode.HTML)
+    await callback.answer()
+
+
 @router.callback_query(F.data == "admin:check_coins")
 async def admin_check_coins(callback: CallbackQuery):
     if callback.from_user.id != ADMIN_ID: return
@@ -191,6 +457,19 @@ async def admin_ai_analyze_start(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer("🔍 Введи ID или @username для анализа (Llama 3.1):")
     await callback.answer()
 
+@router.message(AdminState.waiting_for_analysis_user_id)
+async def admin_analysis_manual_id(message: Message, state: FSMContext):
+    """Ручной ввод ID для отдельного анализа."""
+    if message.from_user.id != ADMIN_ID:
+        return
+    user = find_user_by_id_or_username(message.text)
+    if not user:
+        await message.answer("❌ Пользователь не найден.")
+        return
+    await state.clear()
+    await _run_single_analysis(message, user["user_id"])
+
+
 @router.message(AdminState.waiting_for_user_id_analysis)
 async def admin_ai_analyze_process(message: Message, state: FSMContext):
     user = find_user_by_id_or_username(message.text)
@@ -198,14 +477,16 @@ async def admin_ai_analyze_process(message: Message, state: FSMContext):
         await message.answer("❌ Не найден.")
         return
     await state.update_data(target_user_id=user['user_id'])
+    uid = message.from_user.id
     status = await message.answer("⏳ Анализирую активность...")
     prompt = f"Проанализируй партнера: {user}. Score: {user.get('score', 0)}, Coins: {user.get('incoins', 0)}."
-    res = await generate_text(prompt, "Ты MLM аналитик.", task_type="tracker_report")
+    gen = await generate_text(prompt, "Ты MLM аналитик.", task_type="tracker_report", user_id=uid)
+    display = gen.text + format_admin_footer(gen, uid)
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="✍️ Составить письмо", callback_data="admin:custom_ai_prompt")],
         [InlineKeyboardButton(text="🔙 Назад", callback_data="admin:back")]
     ])
-    await status.edit_text(res, reply_markup=kb)
+    await status.edit_text(display, reply_markup=kb)
 
 @router.callback_query(F.data == "admin:broadcast")
 async def admin_broadcast_start(callback: CallbackQuery, state: FSMContext):
@@ -231,6 +512,7 @@ async def admin_image_gen_cmd(message: Message, state: FSMContext):
     """Команда /image — только для админа. Выбор модели -> формат -> запрос."""
     if message.from_user.id != ADMIN_ID:
         return
+    await state.clear()
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="1️⃣ Nano Banana 2", callback_data="imgmodel:nanobanana")],
         [InlineKeyboardButton(text="2️⃣ Flux 2 Pro", callback_data="imgmodel:flux")],
@@ -241,10 +523,10 @@ async def admin_image_gen_cmd(message: Message, state: FSMContext):
         [InlineKeyboardButton(text="📷 Своя", callback_data="imgmodel:own")],
     ])
     await state.set_state(AdminState.waiting_for_image_model)
-    await message.answer("🖼 Выбери модель для генерации:", reply_markup=kb)
+    await message.answer("🖼 Выбери модель для генерации:", reply_markup=kb, parse_mode=None)
 
 
-@router.callback_query(F.data.startswith("imgmodel:"), StateFilter(AdminState.waiting_for_image_model))
+@router.callback_query(F.data.startswith("imgmodel:"))
 async def admin_image_model_chosen(callback: CallbackQuery, state: FSMContext):
     if callback.from_user.id != ADMIN_ID:
         return
@@ -268,7 +550,7 @@ async def admin_image_model_chosen(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@router.callback_query(F.data.startswith("imgfmt:"), StateFilter(AdminState.waiting_for_image_format))
+@router.callback_query(F.data.startswith("imgfmt:"))
 async def admin_image_format_chosen(callback: CallbackQuery, state: FSMContext):
     if callback.from_user.id != ADMIN_ID:
         return

@@ -12,9 +12,9 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from config.i18n import TEXTS
 from services import db
-from services.ai_service import generate_text
+from services.ai_service import generate_text, format_admin_footer
 from services.language import t
-from services.scheduler import scheduler, send_reminder
+from services.scheduler import send_reminder
 
 logger = logging.getLogger(__name__)
 ADMIN_ID = int(os.getenv("ADMIN_ID", "5925660014"))
@@ -60,14 +60,7 @@ async def menu_crm(callback: CallbackQuery, state: FSMContext) -> None:
     if uid != ADMIN_ID:
         coins = db.get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await callback.message.answer(text, parse_mode="HTML")
+            await callback.message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             await callback.answer()
             return
     await callback.answer()
@@ -85,14 +78,7 @@ async def crm_menu(message: Message, state: FSMContext) -> None:
     if uid != ADMIN_ID:
         coins = db.get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await message.answer(text, parse_mode="HTML")
+            await message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             return
     await state.clear()
     await message.answer(
@@ -126,11 +112,13 @@ async def crm_process_task(message: Message, state: FSMContext) -> None:
     now_str = now.strftime("%Y-%m-%d %H:%M:%S")
 
     system_prompt = PARSER_SYSTEM_PROMPT.format(now=now_str)
-    raw = await generate_text(
+    gen = await generate_text(
         prompt=message.text,
         system_instruction=system_prompt,
         task_type="crm",
+        user_id=uid,
     )
+    raw = gen.text
 
     parsed = _parse_ai_response(raw, now)
     if parsed is None:
@@ -149,18 +137,12 @@ async def crm_process_task(message: Message, state: FSMContext) -> None:
             await message.answer(t(uid, "crm_past_date"), parse_mode=None)
         return
 
-    bot = message.bot
-    scheduler.add_job(
-        send_reminder,
-        trigger="date",
-        run_date=run_date,
-        args=[bot, uid, task_text],
-        id=f"reminder_{uid}_{int(run_date.timestamp())}",
-        replace_existing=True,
-    )
+    run_at_str = run_date.strftime("%Y-%m-%d %H:%M:%S")
+    db.add_crm_reminder(uid, run_at_str, task_text)
+    db.add_user_coins_admin(uid, -1)
 
     formatted_dt = run_date.strftime("%d.%m.%Y в %H:%M")
-    confirm = t(uid, "crm_confirmed", task=task_text, dt=formatted_dt)
+    confirm = t(uid, "crm_confirmed", task=task_text, dt=formatted_dt) + format_admin_footer(gen, uid)
     try:
         await status.edit_text(confirm, parse_mode=None)
     except Exception:
@@ -174,10 +156,9 @@ async def crm_list_reminders(callback: CallbackQuery) -> None:
     uid = callback.from_user.id
     await callback.answer()
 
-    jobs = scheduler.get_jobs()
-    user_jobs = [j for j in jobs if j.id.startswith(f"reminder_{uid}_")]
+    reminders = db.get_user_crm_reminders(uid)
 
-    if not user_jobs:
+    if not reminders:
         await callback.message.answer(
             t(uid, "crm_no_reminders"),
             parse_mode=None,
@@ -185,10 +166,14 @@ async def crm_list_reminders(callback: CallbackQuery) -> None:
         return
 
     lines = [t(uid, "crm_list_header")]
-    for i, job in enumerate(user_jobs, 1):
-        run_date: datetime = job.next_run_time
-        task_text = job.args[2] if len(job.args) > 2 else "—"
-        dt_str = run_date.strftime("%d.%m.%Y %H:%M")
+    for i, r in enumerate(reminders, 1):
+        run_at = r.get("run_at", "")
+        task_text = r.get("task_text", "—")
+        try:
+            dt_obj = datetime.strptime(run_at, "%Y-%m-%d %H:%M:%S")
+            dt_str = dt_obj.strftime("%d.%m.%Y %H:%M")
+        except ValueError:
+            dt_str = run_at
         lines.append(f"  {i}. {dt_str} — {task_text}")
 
     await callback.message.answer("\n".join(lines), parse_mode=None)

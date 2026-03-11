@@ -16,7 +16,7 @@ from config.knowledge_base import (
 )
 from config.prompts import get_system_instruction
 from services import db
-from services.ai_service import generate_text
+from services.ai_service import generate_text, format_admin_footer
 from services.language import t
 
 logger = logging.getLogger(__name__)
@@ -49,14 +49,7 @@ async def menu_marketing(callback: CallbackQuery) -> None:
     if uid != ADMIN_ID:
         coins = db.get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await callback.message.answer(text, parse_mode="HTML")
+            await callback.message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             await callback.answer()
             return
     await callback.answer()
@@ -73,14 +66,7 @@ async def marketing_menu(message: Message) -> None:
     if uid != ADMIN_ID:
         coins = db.get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await message.answer(text, parse_mode="HTML")
+            await message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             return
     await message.answer(
         t(uid, "mkt_title"),
@@ -96,16 +82,18 @@ async def marketing_ranks(callback: CallbackQuery) -> None:
     status = await callback.message.answer(t(uid, "mkt_thinking"))
     system = get_system_instruction(uid) + "\n\n" + get_rank_facts_for_ai()
     prompt = t(uid, "mkt_ranks_ai_prompt")
-    result = await generate_text(
+    gen = await generate_text(
         prompt=prompt,
         system_instruction=system,
         task_type="marketing",
+        user_id=uid,
     )
+    display = gen.text + format_admin_footer(gen, uid)
     try:
-        await status.edit_text(result, parse_mode=None)
+        await status.edit_text(display, parse_mode=None)
     except Exception as e:
         logger.error("Failed to edit marketing ranks message: %s", e)
-        await callback.message.answer(result, parse_mode=None)
+        await callback.message.answer(display, parse_mode=None)
 
 
 @router.callback_query(F.data == "marketing:rewards")
@@ -115,16 +103,18 @@ async def marketing_rewards(callback: CallbackQuery) -> None:
     status = await callback.message.answer(t(uid, "mkt_thinking"))
     system = get_system_instruction(uid) + "\n\n" + get_rewards_file_facts_for_ai()
     prompt = t(uid, "mkt_rewards_ai_prompt")
-    result = await generate_text(
+    gen = await generate_text(
         prompt=prompt,
         system_instruction=system,
         task_type="marketing",
+        user_id=uid,
     )
+    display = gen.text + format_admin_footer(gen, uid)
     try:
-        await status.edit_text(result, parse_mode=None)
+        await status.edit_text(display, parse_mode=None)
     except Exception as e:
         logger.error("Failed to edit rewards message: %s", e)
-        await callback.message.answer(result, parse_mode=None)
+        await callback.message.answer(display, parse_mode=None)
 
 
 @router.callback_query(F.data == "marketing:free_membership")
@@ -134,16 +124,18 @@ async def marketing_free_membership(callback: CallbackQuery) -> None:
     status = await callback.message.answer(t(uid, "mkt_thinking"))
     system = get_system_instruction(uid) + "\n\n" + FREE_MEMBERSHIP_FACTS_FOR_AI
     prompt = t(uid, "mkt_free_ai_prompt")
-    result = await generate_text(
+    gen = await generate_text(
         prompt=prompt,
         system_instruction=system,
         task_type="marketing",
+        user_id=uid,
     )
+    display = gen.text + format_admin_footer(gen, uid)
     try:
-        await status.edit_text(result, parse_mode=None)
+        await status.edit_text(display, parse_mode=None)
     except Exception as e:
         logger.error("Failed to edit free membership message: %s", e)
-        await callback.message.answer(result, parse_mode=None)
+        await callback.message.answer(display, parse_mode=None)
 
 
 @router.callback_query(F.data == "marketing:ask_ai")
@@ -165,14 +157,16 @@ async def marketing_ai_answer(message: Message, state: FSMContext) -> None:
 
     prompt = t(uid, "mkt_ai_prompt", question=message.text)
     system = get_system_instruction(uid) + "\n\n" + REWARDS_FACTS_FOR_AI
-    result = await generate_text(
+    gen = await generate_text(
         prompt=prompt,
         system_instruction=system,
         task_type="marketing",
+        user_id=uid,
     )
 
+    display = gen.text + format_admin_footer(gen, uid)
     try:
-        await status_message.edit_text(result, parse_mode=None)
+        await status_message.edit_text(display, parse_mode=None)
     except Exception as e:
         logger.error("Failed to edit status message: %s", e)
-        await message.answer(result, parse_mode=None)
+        await message.answer(display, parse_mode=None)

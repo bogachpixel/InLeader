@@ -14,7 +14,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from config.i18n import TEXTS
 from config.knowledge_base import get_2fa_steps_and_facts, get_policy_facts_for_ai
 from config.prompts import get_system_instruction
-from services.ai_service import generate_text
+from services.ai_service import generate_text, format_admin_footer
 from services.language import t
 
 logger = logging.getLogger(__name__)
@@ -51,18 +51,18 @@ def _build_policy_keyboard(user_id: int) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def _build_2fa_confirm_keyboard(step_index: int, total: int) -> InlineKeyboardMarkup:
+def _build_2fa_confirm_keyboard(user_id: int, step_index: int, total: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     if step_index < total - 1:
-        builder.button(text="✅ Выполнил, к следующему шагу", callback_data=f"account:2fa_next:{step_index}")
+        builder.button(text=t(user_id, "account_2fa_step_done"), callback_data=f"account:2fa_next:{step_index}")
     else:
-        builder.button(text="✅ Готово! Завершить", callback_data=f"account:2fa_done:{step_index}")
+        builder.button(text=t(user_id, "account_2fa_finish"), callback_data=f"account:2fa_done:{step_index}")
     return builder.as_markup()
 
 
-def _build_2fa_start_keyboard() -> InlineKeyboardMarkup:
+def _build_2fa_start_keyboard(user_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    builder.button(text="🚀 Начать настройку 2FA", callback_data="account:2fa_step:0")
+    builder.button(text=t(user_id, "account_2fa_start"), callback_data="account:2fa_step:0")
     return builder.as_markup()
 
 
@@ -105,7 +105,7 @@ async def account_2fa_start(callback: CallbackQuery, state: FSMContext) -> None:
     intro = t(uid, "account_2fa_intro")
     await callback.message.answer(
         intro,
-        reply_markup=_build_2fa_start_keyboard(),
+        reply_markup=_build_2fa_start_keyboard(uid),
         parse_mode=None,
     )
 
@@ -130,7 +130,7 @@ async def account_2fa_show_step(callback: CallbackQuery, state: FSMContext) -> N
     step = steps[idx]
     total = len(steps)
     caption = f"🔐 {step['title']} из {total}\n\n{step['text']}"
-    kb = _build_2fa_confirm_keyboard(idx, total)
+    kb = _build_2fa_confirm_keyboard(uid, idx, total)
     if step.get("image_path") and Path(step["image_path"]).exists():
         try:
             photo = BufferedInputFile(Path(step["image_path"]).read_bytes(), filename="step.png")
@@ -167,21 +167,23 @@ async def account_policy_start(callback: CallbackQuery, state: FSMContext) -> No
     status = await callback.message.answer(t(uid, "account_policy_thinking"), parse_mode=None)
     system = get_system_instruction(uid) + "\n\n" + facts + "\n\n" + t(uid, "account_policy_system")
     prompt = t(uid, "account_policy_intro_prompt")
-    result = await generate_text(
+    gen = await generate_text(
         prompt=prompt,
         system_instruction=system,
         task_type="general",
+        user_id=uid,
     )
+    display = gen.text + format_admin_footer(gen, uid) + "\n\n" + t(uid, "account_policy_ask")
     try:
         await status.edit_text(
-            result + "\n\n" + t(uid, "account_policy_ask"),
+            display,
             reply_markup=_build_policy_keyboard(uid),
             parse_mode=None,
         )
     except Exception as e:
         logger.error("policy intro: %s", e)
         await callback.message.answer(
-            result + "\n\n" + t(uid, "account_policy_ask"),
+            display,
             reply_markup=_build_policy_keyboard(uid),
             parse_mode=None,
         )
@@ -210,21 +212,23 @@ async def account_policy_chat(message: Message, state: FSMContext) -> None:
     status = await message.answer(t(uid, "account_policy_thinking"), parse_mode=None)
     system = get_system_instruction(uid) + "\n\n" + facts + "\n\n" + t(uid, "account_policy_system")
     prompt = t(uid, "account_policy_user_prompt", question=message.text)
-    result = await generate_text(
+    gen = await generate_text(
         prompt=prompt,
         system_instruction=system,
         task_type="general",
+        user_id=uid,
     )
+    display = gen.text + format_admin_footer(gen, uid)
     try:
         await status.edit_text(
-            result,
+            display,
             reply_markup=_build_policy_keyboard(uid),
             parse_mode=None,
         )
     except Exception as e:
         logger.error("policy chat: %s", e)
         await message.answer(
-            result,
+            display,
             reply_markup=_build_policy_keyboard(uid),
             parse_mode=None,
         )

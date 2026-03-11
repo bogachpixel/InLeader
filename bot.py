@@ -21,10 +21,12 @@ from handlers.objections import router as objections_router
 from handlers.onboarding import router as onboarding_router
 from handlers.simulator import router as simulator_router
 from handlers.start import router as start_router
+from handlers.balance import router as balance_router
+from handlers.tariffs import router as tariffs_router
 from handlers.tracker import router as tracker_router
 from handlers.admin import router as admin_router
 from services.db import init_db
-from services.scheduler import scheduler, tracker_reminder_job
+from services.scheduler import scheduler, tracker_reminder_job, crm_delivery_job
 
 load_dotenv()
 
@@ -74,6 +76,8 @@ async def main() -> None:
     dp = Dispatcher()
 
     dp.include_router(start_router)
+    dp.include_router(balance_router)
+    dp.include_router(tariffs_router)
     dp.include_router(copywriter_router)
     dp.include_router(objections_router)
     dp.include_router(account_router)
@@ -102,10 +106,41 @@ async def main() -> None:
         id="tracker_reminder",
         replace_existing=True,
     )
+    scheduler.add_job(
+        crm_delivery_job,
+        "cron",
+        minute="*",
+        args=[bot],
+        id="crm_delivery",
+        replace_existing=True,
+    )
     scheduler.start()
     
     logger.info("InLeader bot is starting...")
     await bot.delete_webhook(drop_pending_updates=True)
+
+    # Запуск HTTP-сервера для FreeKassa и CryptoPay (ngrok туннель)
+    fk_port = int(os.getenv("FREEKASSA_PORT", "8081"))
+    has_freekassa = os.getenv("FREEKASSA_MERCHANT_ID") and os.getenv("FREEKASSA_SECRET2")
+    has_cryptopay = bool(os.getenv("CRYPTOPAY_TOKEN"))
+    if has_freekassa or has_cryptopay:
+        try:
+            from freekassa_webhook import run_webhook_server
+            await run_webhook_server(bot, port=fk_port)
+            ngrok_url = os.getenv("NGROK_URL", "")
+            if ngrok_url:
+                if has_freekassa:
+                    logger.info("URL FreeKassa: %s/freekassa/notification", ngrok_url.rstrip("/"))
+                if has_cryptopay:
+                    logger.info("URL CryptoPay: %s/cryptopay/webhook", ngrok_url.rstrip("/"))
+        except OSError as e:
+            if "10048" in str(e) or "address already in use" in str(e).lower():
+                logger.warning("Порт %d занят. Вебхуки FreeKassa/CryptoPay недоступны. Запускаю бота без них.", fk_port)
+            else:
+                raise
+    else:
+        logger.warning("FreeKassa и CryptoPay не настроены")
+
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 

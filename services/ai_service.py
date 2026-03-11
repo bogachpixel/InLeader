@@ -1,5 +1,6 @@
 import logging
 import os
+from dataclasses import dataclass
 import aiohttp
 from dotenv import load_dotenv
 from groq import AsyncGroq
@@ -56,14 +57,31 @@ _ROUTES: dict[str, dict] = {
 
 MAX_HISTORY_MESSAGES = 10
 
+
+@dataclass
+class GenResult:
+    text: str
+    model: str
+    cost: float | None
+
+
+def format_admin_footer(gen: "GenResult", user_id: int) -> str:
+    """Возвращает строку с агентом и стоимостью только для админа."""
+    admin_id = int(os.getenv("ADMIN_ID", "0"))
+    if user_id != admin_id:
+        return ""
+    cost_str = f"${gen.cost:.6f}" if gen.cost is not None else "—"
+    return f"\n\n📊 Агент: {gen.model}\n💰 Стоимость: {cost_str}"
+
+
 async def generate_text(
     prompt: str,
     system_instruction: str,
     task_type: str = "general",
     history: list[dict[str, str]] | None = None,
     user_id: int | None = None,
-) -> str:
-    """Маршрутизирует запрос в нужную модель."""
+) -> GenResult:
+    """Маршрутизирует запрос в нужную модель. Возвращает GenResult(text, model, cost)."""
     route = _ROUTES.get(task_type, _ROUTES["general"])
     client = route["client"]
     model = route["model"]
@@ -81,11 +99,54 @@ async def generate_text(
         )
         text = response.choices[0].message.content
         if not text:
-            return "⚠️ Ошибка: Нейросеть вернула пустой ответ. Попробуйте еще раз."
-        return text
+            return GenResult("⚠️ Ошибка: Нейросеть вернула пустой ответ. Попробуйте еще раз.", model, None)
+        usage = getattr(response, "usage", None)
+        cost = None
+        if usage:
+            cost = getattr(usage, "total_cost", None) or getattr(usage, "cost", None)
+            if cost is not None:
+                try:
+                    cost = float(cost)
+                except (TypeError, ValueError):
+                    cost = None
+        if user_id is not None:
+            try:
+                from services.db import log_usage
+                log_usage(user_id, task_type, model, cost)
+            except Exception as log_err:
+                logger.warning("usage log failed: %s", log_err)
+        return GenResult(text=text, model=model, cost=cost)
     except Exception as e:
         logger.exception(f"AI error [{model}]: {e}")
-        return f"⚠️ Ошибка связи с ИИ: {str(e)[:100]}. Проверьте API-ключи."
+        return GenResult(f"⚠️ Ошибка связи с ИИ: {str(e)[:100]}. Проверьте API-ключи.", model, None)
+
+
+async def generate_text_stream(
+    prompt: str,
+    system_instruction: str,
+    task_type: str = "general",
+    history: list[dict[str, str]] | None = None,
+) -> "AsyncIterator[str]":
+    """Стримит ответ чанками. Используется для API чата (сайт)."""
+    route = _ROUTES.get(task_type, _ROUTES["general"])
+    client = route["client"]
+    model = route["model"]
+
+    messages = [{"role": "system", "content": system_instruction}]
+    if history:
+        messages.extend(history[-MAX_HISTORY_MESSAGES:])
+    messages.append({"role": "user", "content": prompt})
+
+    stream = await client.chat.completions.create(
+        model=model,
+        messages=messages,
+        stream=True,
+        timeout=60,
+    )
+    async for chunk in stream:
+        delta = chunk.choices[0].delta if chunk.choices else None
+        if delta and getattr(delta, "content", None):
+            yield delta.content
 
 IMAGE_FORMAT_REELS = "9:16"
 IMAGE_FORMAT_POST = "16:9"

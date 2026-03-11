@@ -1,8 +1,6 @@
 """
 Per-user language preference (in-memory).
-
-Сейчас активен только русский язык.
-Остальные языки сохранены в i18n.py как заглушки — будут подключены позже.
+Все языки активны. При отсутствии ключа — fallback на русский.
 """
 
 from config.i18n import TEXTS
@@ -13,18 +11,18 @@ DEFAULT_LANG = "ru"
 
 
 def set_language(user_id: int, lang: str) -> None:
-    # Сохраняем выбор, но пока он не влияет на перевод
     _user_languages[user_id] = lang
 
 
 def get_language(user_id: int) -> str:
-    # Языки временно заморожены — всегда русский
-    return DEFAULT_LANG
+    return _user_languages.get(user_id, DEFAULT_LANG)
 
 
 def t(user_id: int, key: str, **kwargs: str) -> str:
-    """Возвращает строку на русском языке."""
-    text = TEXTS[DEFAULT_LANG].get(key, key)
+    """Возвращает строку на языке пользователя. Fallback: ru."""
+    lang = get_language(user_id)
+    strings = TEXTS.get(lang) or TEXTS[DEFAULT_LANG]
+    text = strings.get(key) or TEXTS[DEFAULT_LANG].get(key, key)
     if kwargs:
         text = text.format(**kwargs)
     return text

@@ -50,6 +50,9 @@ venv.bak/
 .cache/
 db.sqlite3
 db.sqlite3-journal
+inleader.db
+inleader.db-journal
+caddy.exe
 
 # OS
 .DS_Store

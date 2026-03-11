@@ -12,7 +12,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from config.i18n import TEXTS
-from services.ai_service import generate_text
+from services.ai_service import generate_text, format_admin_footer
 from services.db import (
     close_tracker_day,
     get_timezone,
@@ -35,15 +35,7 @@ _ALL_TRACKER_BUTTONS = {texts["btn_tracker"] for texts in TEXTS.values()}
 TASK_IDS = (1, 2, 3, 4)
 TASK_LABELS = ("contacts", "followup", "content", "study")
 
-TIMEZONE_OPTIONS = [
-    (2, "UTC+2 Европа"),
-    (3, "UTC+3 Москва"),
-    (4, "UTC+4 Екатеринбург"),
-    (5, "UTC+5 Астана/Ташкент"),
-    (6, "UTC+6 Алматы/Бишкек"),
-    (7, "UTC+7 Новосибирск/Бангкок"),
-    (8, "UTC+8 Иркутск/Сингапур"),
-]
+TIMEZONE_OFFSETS = (2, 3, 4, 5, 6, 7, 8)
 
 
 class TrackerState(StatesGroup):
@@ -52,10 +44,10 @@ class TrackerState(StatesGroup):
     waiting_for_task_report = State()
 
 
-def _build_timezone_keyboard() -> InlineKeyboardMarkup:
+def _build_timezone_keyboard(user_id: int) -> InlineKeyboardMarkup:
     buttons = [
-        [InlineKeyboardButton(text=label, callback_data=f"tz:{offset}")]
-        for offset, label in TIMEZONE_OPTIONS
+        [InlineKeyboardButton(text=t(user_id, f"tz_{off}"), callback_data=f"tz:{off}")]
+        for off in TIMEZONE_OFFSETS
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
@@ -84,7 +76,7 @@ def _build_tracker_keyboard(user_id: int, progress_str: str) -> InlineKeyboardMa
     ])
     buttons.append([
         InlineKeyboardButton(
-            text="🔄 Начать спринт заново",
+            text=t(user_id, "trk_restart_sprint"),
             callback_data="tracker:reset_sprint",
         )
     ])
@@ -107,9 +99,9 @@ async def _show_tracker(callback_or_msg: CallbackQuery | Message, uid: int, stat
 
     # Проверка блокировки (день уже закрыт)
     if last_date == today:
-        text = f"✅ План на сегодня выполнен!\n🔥 Твой стрик: {streak} дней. Возвращайся завтра, чтобы продолжить спринт!"
+        text = t(uid, "trk_done_today", streak=streak)
         kb = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="🏠 В меню", callback_data="menu:main")
+            InlineKeyboardButton(text=t(uid, "btn_back_menu"), callback_data="menu:main")
         ]])
         if isinstance(callback_or_msg, CallbackQuery):
             await callback_or_msg.message.edit_text(text, reply_markup=kb)
@@ -142,14 +134,7 @@ async def menu_tracker(callback: CallbackQuery, state: FSMContext) -> None:
     if uid != ADMIN_ID:
         coins = get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await callback.message.answer(text, parse_mode="HTML")
+            await callback.message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             await callback.answer()
             return
     await callback.answer()
@@ -160,8 +145,8 @@ async def menu_tracker(callback: CallbackQuery, state: FSMContext) -> None:
     if tz is None:
         await state.set_state(TrackerState.choosing_timezone)
         await callback.message.answer(
-            "🌍 Чтобы я напоминал тебе о трекере ровно в 20:00, выбери свой часовой пояс:",
-            reply_markup=_build_timezone_keyboard(),
+            t(uid, "trk_choose_tz"),
+            reply_markup=_build_timezone_keyboard(uid),
         )
         return
 
@@ -174,14 +159,7 @@ async def tracker_menu(message: Message, state: FSMContext) -> None:
     if uid != ADMIN_ID:
         coins = get_user_coins(uid)
         if coins < 1:
-            text = (
-                "⚠️ <b>Доступ ограничен</b>\n\n"
-                "Твой тестовый период или текущий баланс InCoins подошли к концу. "
-                "Инструменты бота ждут тебя, но для их запуска необходимо подзарядить кошелек.\n\n"
-                "💎 <b>Пополни баланс и продолжай творить вместе с ИИ!</b>\n\n"
-                "<i>Для пополнения баланса и активации всех функций обратись к своему наставнику или администратору.</i>"
-            )
-            await message.answer(text, parse_mode="HTML")
+            await message.answer(t(uid, "paywall_text"), parse_mode="HTML")
             return
     await state.clear()
     upsert_user(uid, message.from_user.username or message.from_user.first_name)
@@ -190,8 +168,8 @@ async def tracker_menu(message: Message, state: FSMContext) -> None:
     if tz is None:
         await state.set_state(TrackerState.choosing_timezone)
         await message.answer(
-            "🌍 Чтобы я напоминал тебе о трекере ровно в 20:00, выбери свой часовой пояс:",
-            reply_markup=_build_timezone_keyboard(),
+            t(uid, "trk_choose_tz"),
+            reply_markup=_build_timezone_keyboard(uid),
         )
         return
 
@@ -218,7 +196,7 @@ async def task_click(callback: CallbackQuery, state: FSMContext) -> None:
     progress = data.get("daily_progress", "0,0,0,0").split(",")
     
     if progress[task_id-1] == "1":
-        await callback.answer("✅ Это задание уже выполнено сегодня!", show_alert=True)
+        await callback.answer(t(uid, "trk_task_done_already"), show_alert=True)
         return
 
     await callback.answer()
@@ -227,8 +205,7 @@ async def task_click(callback: CallbackQuery, state: FSMContext) -> None:
     
     label = t(uid, f"trk_{TASK_LABELS[task_id-1]}")
     await callback.message.answer(
-        f"📝 Отчет по заданию: *{label}*\n"
-        "Напиши кратко, что именно сделано?",
+        t(uid, "trk_report_prompt", label=label),
         parse_mode="Markdown"
     )
 
@@ -241,7 +218,7 @@ async def process_task_report(message: Message, state: FSMContext) -> None:
     task_id = state_data.get("current_task_id")
 
     if not report_text or len(report_text) < 5:
-        await message.answer("❌ Слишком короткий отчет. Распиши подробнее!")
+        await message.answer(t(uid, "trk_report_too_short"))
         return
 
     system_prompt = (
@@ -250,15 +227,17 @@ async def process_task_report(message: Message, state: FSMContext) -> None:
         'Если норм, ответь "ACCEPT: Отлично!"'
     )
 
-    ai_response = await generate_text(
+    gen = await generate_text(
         prompt=report_text,
         system_instruction=system_prompt,
         task_type="tracker_report",
+        user_id=uid,
     )
+    ai_response = gen.text
 
     if "REJECT:" in ai_response.upper():
         reject_msg = ai_response.split("REJECT:")[-1].strip()
-        await message.answer(f"❌ {reject_msg}")
+        await message.answer(f"❌ {reject_msg}{format_admin_footer(gen, uid)}")
         return
 
     # Успех: обновляем прогресс в БД СТРОГО для текущего user_id
@@ -268,7 +247,7 @@ async def process_task_report(message: Message, state: FSMContext) -> None:
     new_progress_str = ",".join(progress)
     update_daily_progress(uid, new_progress_str)
 
-    await message.answer("✅ Задание принято!")
+    await message.answer(t(uid, "trk_task_accepted") + format_admin_footer(gen, uid))
     await _show_tracker(message, uid, state)
 
 
@@ -276,7 +255,7 @@ async def process_task_report(message: Message, state: FSMContext) -> None:
 async def reset_sprint(callback: CallbackQuery, state: FSMContext) -> None:
     uid = callback.from_user.id
     reset_tracker_sprint(uid)
-    await callback.answer("🔄 Спринт сброшен!", show_alert=True)
+    await callback.answer(t(uid, "trk_sprint_reset"), show_alert=True)
     await _show_tracker(callback, uid, state)
 
 
